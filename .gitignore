@@ -1,0 +1,10 @@
+node_modules/
+*.log
+.DS_Store
+# Runtime signal state (per-user, global)
+.claude-tetris/
+# Build outputs
+dist/
+# Local test artifacts
+research/
+.remember

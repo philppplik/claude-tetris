@@ -1,0 +1,12 @@
+{
+  "name": "claude-tetris",
+  "version": "0.2.0",
+  "description": "Play Tetris in a split pane while Claude Code works. The game auto-pauses when Claude is done and resumes on your next prompt.",
+  "author": {
+    "name": "Philipp Paulik"
+  },
+  "license": "MIT",
+  "hooks": "./hooks.json",
+  "commands": "./commands",
+  "keywords": ["tetris", "game", "hooks", "tui", "productivity"]
+}

@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"<plugin_dir>/scripts/tetris-signal.mjs\" play"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"<plugin_dir>/scripts/tetris-signal.mjs\" pause"
+          }
+        ]
+      }
+    ]
+  }
+}

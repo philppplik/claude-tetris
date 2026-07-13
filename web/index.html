@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>claude-tetris — Play Tetris while Claude Code works</title>
+  <meta name="description" content="A Tetris game that runs in a split pane beside Claude Code. It auto-pauses when Claude is done and resumes on your next prompt." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+  <!-- ===== Nav ===== -->
+  <nav class="nav" id="nav">
+    <div class="nav__inner">
+      <a href="#hero" class="nav__logo">
+        <span class="logo-block" aria-hidden="true"></span>
+        <span>claude-tetris</span>
+      </a>
+      <ul class="nav__links">
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#demo">Demo</a></li>
+        <li><a href="#install">Install</a></li>
+      </ul>
+      <a href="#install" class="btn btn--primary nav__cta">Get it</a>
+    </div>
+  </nav>
+
+  <!-- ===== Hero ===== -->
+  <header class="hero" id="hero">
+    <div class="hero__bg" aria-hidden="true">
+      <div class="float-block" style="--c:#34d3ee;--x:8%;--y:18%;--d:0s"></div>
+      <div class="float-block" style="--c:#facc15;--x:82%;--y:12%;--d:1.2s"></div>
+      <div class="float-block" style="--c:#c084fc;--x:14%;--y:74%;--d:2.1s"></div>
+      <div class="float-block" style="--c:#4ade80;--x:88%;--y:70%;--d:0.6s"></div>
+      <div class="float-block" style="--c:#fb923c;--x:48%;--y:8%;--d:1.7s"></div>
+    </div>
+
+    <div class="hero__inner">
+      <div class="hero__copy reveal">
+        <span class="eyebrow">Claude Code × Tetris</span>
+        <h1 class="hero__title">
+          Play Tetris<br />
+          <span class="grad">while Claude works.</span>
+        </h1>
+        <p class="hero__lead">
+          A full Tetris game that runs in a split pane beside Claude Code.
+          It auto-pauses the moment Claude is done — and resumes the second
+          you type your next prompt. A tiny reward for long coding sessions.
+        </p>
+        <div class="hero__cta">
+          <a href="#install" class="btn btn--primary">Install now</a>
+          <a href="#demo" class="btn btn--ghost">▶ Try the live demo</a>
+        </div>
+        <div class="hero__meta">
+          <span><strong>44</strong> tests green</span>
+          <span><strong>SRS</strong> rotation</span>
+          <span><strong>7-bag</strong> randomizer</span>
+        </div>
+      </div>
+
+      <div class="hero__game reveal">
+        <div class="game-card">
+          <div class="game-card__bar">
+            <span class="dot dot--r"></span><span class="dot dot--y"></span><span class="dot dot--g"></span>
+            <span class="game-card__title">claude-tetris</span>
+          </div>
+          <canvas id="hero-canvas" width="200" height="400"></canvas>
+          <p class="game-card__hint">Live &amp; interactive — use ← → ↓ and Space</p>
+        </div>
+      </div>
+    </div>
+
+    <a href="#how" class="scroll-cue" aria-label="Scroll down">
+      <span></span>
+    </a>
+  </header>
+
+  <!-- ===== How it works ===== -->
+  <section class="section how" id="how">
+    <div class="section__head reveal">
+      <span class="eyebrow">The coupling</span>
+      <h2>How the pause magic works</h2>
+      <p>Claude Code hooks drive a tiny signal file. No polling, no lag.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step__num">01</div>
+        <h3>Hook fires</h3>
+        <p>A <code>UserPromptSubmit</code> or <code>Stop</code> hook in Claude Code triggers when you start or finish.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step__num">02</div>
+        <h3>Signal writes</h3>
+        <p><code>tetris-signal.mjs play|pause</code> writes a single <code>state.json</code> atomically.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step__num">03</div>
+        <h3>Game reacts</h3>
+        <p>The TUI watches the file via <code>fs.watch</code> → freezes on "Claude is done", resumes instantly.</p>
+      </div>
+    </div>
+
+    <div class="flow reveal">
+      <div class="flow__node">Claude Code</div>
+      <div class="flow__arrow">→</div>
+      <div class="flow__node">state.json</div>
+      <div class="flow__arrow">→</div>
+      <div class="flow__node flow__node--accent">Tetris TUI</div>
+    </div>
+  </section>
+
+  <!-- ===== Features (Bento) ===== -->
+  <section class="section features" id="features">
+    <div class="section__head reveal">
+      <span class="eyebrow">Why it's good</span>
+      <h2>Built like a real Tetris</h2>
+      <p>Not a toy. Proper mechanics, clean architecture, fully tested.</p>
+    </div>
+
+    <div class="bento">
+      <div class="bento__card bento__card--wide reveal">
+        <div class="bento__icon">🎯</div>
+        <h3>SRS rotation + wall kicks</h3>
+        <p>Exact Super Rotation System with kick tables — rotations feel like the original, including those satisfying wall saves.</p>
+      </div>
+      <div class="bento__card reveal">
+        <div class="bento__icon">🎲</div>
+        <h3>7-bag randomizer</h3>
+        <p>Fair piece distribution. No unfair droughts.</p>
+      </div>
+      <div class="bento__card reveal">
+        <div class="bento__icon">👻</div>
+        <h3>Ghost piece</h3>
+        <p>See exactly where the piece will land.</p>
+      </div>
+      <div class="bento__card reveal">
+        <div class="bento__icon">⏸</div>
+        <h3>Auto-pause coupling</h3>
+        <p>Claude's hooks pause the game via a signal file. Zero polling.</p>
+      </div>
+      <div class="bento__card reveal">
+        <div class="bento__icon">🖥</div>
+        <h3>Split-pane</h3>
+        <p>Windows Terminal: Claude left, Tetris right.</p>
+      </div>
+      <div class="bento__card bento__card--wide reveal">
+        <div class="bento__icon">📐</div>
+        <h3>Responsive TUI</h3>
+        <p>Recomputes layout from terminal size, reacts to resize, and reads the signal via filesystem watching. Headless engine is fully unit-tested.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Live Demo ===== -->
+  <section class="section demo" id="demo">
+    <div class="section__head reveal">
+      <span class="eyebrow">Play it</span>
+      <h2>Live demo — right here</h2>
+      <p>A full canvas Tetris, running in your browser. Beat your high score.</p>
+    </div>
+
+    <div class="demo__grid reveal">
+      <div class="demo__game">
+        <canvas id="demo-canvas" width="280" height="560"></canvas>
+        <div class="demo__overlay" id="demo-overlay">
+          <div class="demo__overlay-inner">
+            <h3>GAME OVER</h3>
+            <p id="demo-final">Score 0</p>
+            <button class="btn btn--primary" id="demo-restart">Play again</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo__side">
+        <div class="stat">
+          <span class="stat__label">Score</span>
+          <span class="stat__value" id="demo-score">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat__label">Level</span>
+          <span class="stat__value" id="demo-level">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat__label">Lines</span>
+          <span class="stat__value" id="demo-lines">0</span>
+        </div>
+
+        <div class="keys">
+          <div class="keys__row"><kbd>←</kbd><kbd>→</kbd><span>move</span></div>
+          <div class="keys__row"><kbd>↑</kbd><kbd>X</kbd><span>rotate</span></div>
+          <div class="keys__row"><kbd>↓</kbd><span>soft drop</span></div>
+          <div class="keys__row"><kbd>Space</kbd><span>hard drop</span></div>
+          <div class="keys__row"><kbd>C</kbd><span>hold</span></div>
+          <div class="keys__row"><kbd>P</kbd><span>pause</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Install ===== -->
+  <section class="section install" id="install">
+    <div class="section__head reveal">
+      <span class="eyebrow">Get started</span>
+      <h2>Install in 10 seconds</h2>
+      <p>Double-click for the easy path, or use the command line.</p>
+    </div>
+
+    <div class="install__grid">
+      <div class="install__card reveal">
+        <h3>🪟 Easy (Windows)</h3>
+        <ol class="steps-list">
+          <li>Double-click <code>install.bat</code></li>
+          <li>Hooks install automatically (your <code>settings.json</code> is backed up)</li>
+          <li>Open the split pane when prompted</li>
+        </ol>
+        <p class="install__note">To uninstall: double-click <code>uninstall.bat</code>.</p>
+      </div>
+
+      <div class="install__card install__card--code reveal">
+        <div class="code-head">
+          <span>Command line</span>
+          <button class="copy-btn" data-copy="npm run install:hooks">Copy</button>
+        </div>
+        <pre><code>npm run install:hooks
+npm run launch        # open split pane</code></pre>
+        <div class="code-head code-head--mt">
+          <span>Slash command</span>
+          <button class="copy-btn" data-copy="/tetris">Copy</button>
+        </div>
+        <pre><code>/tetris   # launch from inside Claude Code</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <span class="logo-block" aria-hidden="true"></span>
+        <span>claude-tetris</span>
+      </div>
+      <p class="footer__note">Playable while Claude Code works. MIT licensed.</p>
+    </div>
+  </footer>
+
+  <script src="assets/tetris-demo.js"></script>
+  <script src="assets/main.js"></script>
+</body>
+</html>

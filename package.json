@@ -1,0 +1,51 @@
+{
+  "name": "claude-tetris",
+  "version": "0.1.0",
+  "description": "Play Tetris in a split pane beside Claude Code — auto-pauses when Claude is done, resumes on your next prompt.",
+  "type": "module",
+  "bin": {
+    "claude-tetris": "bin/tetris.mjs"
+  },
+  "files": [
+    "bin/",
+    "game/",
+    "lib/",
+    "scripts/",
+    "claude-code/",
+    "install.bat",
+    "uninstall.bat",
+    "launch-split.bat",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node bin/tetris.mjs",
+    "test": "node --test",
+    "install:hooks": "node scripts/install.mjs",
+    "uninstall:hooks": "node scripts/uninstall.mjs",
+    "launch": "node scripts/launch.mjs",
+    "dev": "node scripts/web-server.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "claude-code",
+    "tetris",
+    "plugin",
+    "tui",
+    "hooks",
+    "terminal",
+    "game"
+  ],
+  "author": "Philipp Paulik",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/philppplik/claude-tetris.git"
+  },
+  "homepage": "https://github.com/philppplik/claude-tetris#readme",
+  "bugs": {
+    "url": "https://github.com/philppplik/claude-tetris/issues"
+  }
+}
