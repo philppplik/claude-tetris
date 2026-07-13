@@ -43,7 +43,7 @@ function main() {
 
   if (!findWT()) {
     console.error("❌ Windows Terminal (wt.exe) nicht gefunden.");
-    console.error("   Installiere es aus dem Microsoft Store oder nutze launch-split.bat.");
+    console.error("   Installiere es aus dem Microsoft Store oder starte das Spiel direkt mit `claude-tetris`.");
     process.exit(1);
   }
 
