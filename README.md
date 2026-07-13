@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="claude-tetris.png" alt="claude-tetris — Tetris ▷_ Claude" width="100%" />
+
 # 🧱 claude-tetris
 
 ### Play Tetris in a split pane beside Claude Code.
