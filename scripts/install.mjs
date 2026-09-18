@@ -9,6 +9,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isDirectRun } from "../lib/direct-run.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PLUGIN_DIR = path.resolve(__dirname, ".."); // claude-tetris/
@@ -17,8 +18,13 @@ const CLAUDE_HOME =
   (process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), ".claude")).replace(/[/\\]$/, "");
 const SETTINGS = path.join(CLAUDE_HOME, "settings.json");
 
-const PLAY_CMD = `node "${SIGNAL}" play`;
-const PAUSE_CMD = `node "${SIGNAL}" pause`;
+/** Event -> Kommando. Eine Liste, damit install und uninstall nicht driften. */
+export const HOOKS = [
+  ["UserPromptSubmit", `node "${SIGNAL}" play`],
+  ["Stop", `node "${SIGNAL}" pause`],
+  // Permission-Rückfrage: pausieren, damit man sie nicht verpasst.
+  ["Notification", `node "${SIGNAL}" notify`],
+];
 
 function loadSettings() {
   if (!fs.existsSync(SETTINGS)) return {};
@@ -67,8 +73,7 @@ function main() {
   backup();
 
   settings.hooks = settings.hooks || {};
-  addHook(settings.hooks, "UserPromptSubmit", PLAY_CMD);
-  addHook(settings.hooks, "Stop", PAUSE_CMD);
+  for (const [event, command] of HOOKS) addHook(settings.hooks, event, command);
 
   // Bewusst KEIN enabledPlugins-Eintrag: dieser Pfad verdrahtet nur die Hooks
   // direkt. Die Plugin-Registrierung macht Claude Code selbst, sobald das
@@ -82,4 +87,6 @@ function main() {
   console.log(`   Teste mit: node bin/tetris.mjs\n`);
 }
 
-main();
+// Nur ausführen, wenn direkt aufgerufen. Ein Import — etwa aus einem Test, der
+// nur HOOKS lesen will — darf NIEMALS die settings.json des Users anfassen.
+if (isDirectRun(import.meta.url)) main();

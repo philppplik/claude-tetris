@@ -6,6 +6,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isDirectRun } from "../lib/direct-run.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PLUGIN_DIR = path.resolve(__dirname, "..");
@@ -14,8 +15,14 @@ const CLAUDE_HOME =
   (process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), ".claude")).replace(/[/\\]$/, "");
 const SETTINGS = path.join(CLAUDE_HOME, "settings.json");
 
-const PLAY_CMD = `node "${SIGNAL}" play`;
-const PAUSE_CMD = `node "${SIGNAL}" pause`;
+// Alle Kommandos, die wir je geschrieben haben. Ältere Versionen kannten nur
+// play/pause — die müssen weiterhin aufgeräumt werden.
+const OURS = new Set([
+  `node "${SIGNAL}" play`,
+  `node "${SIGNAL}" pause`,
+  `node "${SIGNAL}" notify`,
+]);
+const EVENTS = ["UserPromptSubmit", "Stop", "Notification"];
 
 function main() {
   console.log(`\n🗑  claude-tetris deinstallieren…\n`);
@@ -26,14 +33,11 @@ function main() {
   const settings = JSON.parse(fs.readFileSync(SETTINGS, "utf8"));
   const hooks = settings.hooks || {};
 
-  for (const event of ["UserPromptSubmit", "Stop"]) {
+  for (const event of EVENTS) {
     if (!hooks[event]) continue;
     const before = hooks[event].length;
     hooks[event] = hooks[event].filter(
-      (entry) =>
-        !(entry.hooks || []).some(
-          (h) => h.command === PLAY_CMD || h.command === PAUSE_CMD
-        )
+      (entry) => !(entry.hooks || []).some((h) => OURS.has(h.command))
     );
     const removed = before - hooks[event].length;
     if (removed > 0) console.log(`  ✓ ${event}: ${removed} Hook(s) entfernt`);
@@ -49,4 +53,5 @@ function main() {
   console.log(`\n✅ claude-tetris entfernt. Backup angelegt.`);
 }
 
-main();
+// Import darf nichts verändern - siehe lib/direct-run.mjs.
+if (isDirectRun(import.meta.url)) main();

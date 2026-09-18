@@ -16,7 +16,7 @@ wait becomes a playable game, and the game's state is tied to Claude's:
 | -------------------------- | ------------------ |
 | generating / working       | running (playable) |
 | finished / awaiting input  | paused             |
-| awaiting permission        | paused (planned)   |
+| awaiting permission        | paused (opt-out)   |
 
 ---
 
@@ -71,7 +71,7 @@ to signals:
 | ------------------ | ----------------------------- | ------- |
 | `UserPromptSubmit` | prompt submitted, cook starts | PLAY    |
 | `Stop`             | Claude finished               | PAUSE   |
-| `Notification`     | Claude needs permission       | PAUSE (planned) |
+| `Notification`     | Claude needs permission       | PAUSE (opt-out) |
 
 **D — the launcher** (`scripts/`). Backend selection is a pure function in
 `launch-plan.mjs`; `launch.mjs` executes the resulting plan.
@@ -87,12 +87,9 @@ to signals:
 - [x] **4 — Plugin and hooks.** Play/pause switches automatically.
 - [x] **5 — Launcher.** Split pane on Windows Terminal, tmux, iTerm2, kitty and
       WezTerm, with a documented cross-window fallback.
-- [ ] **6 — Polish.** Colours and README are done. Open:
-  - **Lock delay + DAS/ARR.** Pieces currently lock on contact, so there is no
-    slide and no T-spin finish. This is the gap between "Tetris-like" and "feels
-    right".
-  - **Highscore persistence.** The score is lost when the pane closes.
-  - **Pause on permission prompts** via the `Notification` hook, as an option.
+- [x] **6 — Polish.** Lock delay (500 ms / 15 resets), DAS/ARR on modern
+      competitive defaults, persistent highscore, and pause on permission
+      prompts via the `Notification` hook.
 - [ ] **7 — Distribution.** Marketplace manifest shipped; announce and list it.
 
 ---
@@ -103,6 +100,9 @@ to signals:
 - **Fallback without Windows Terminal** — resolved: `scripts/launch-plan.mjs`
   picks from five terminals, and with no match it points at the second-window
   fallback, which works because the signal file couples across windows.
+- **DAS in a terminal** — bounded by the OS auto-repeat delay, because raw mode
+  gives no key-up events. Documented rather than papered over; `ARR=0` is where
+  the feel actually comes from.
 - **Plugin root** — resolved: the repository root is the plugin root. Claude Code
   copies a plugin into its cache and a copied plugin cannot reach outside its own
   directory with `../`, so `scripts/` has to live inside it.

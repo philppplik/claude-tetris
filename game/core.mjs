@@ -97,10 +97,18 @@ function lineScore(lines, level) {
   return base * (level + 1);
 }
 
+/** Lock-Delay nach Guideline: 500 ms, maximal 15 Resets pro Stück. */
+export const LOCK_DELAY_MS = 500;
+export const MAX_LOCK_RESETS = 15;
+
 export class Tetris {
   constructor(opts = {}) {
     /** rng: Funktion -> [0,1). Für deterministische Tests übergebbar. */
     this._rng = opts.rng ?? Math.random;
+    /** now: Uhr in ms. Injizierbar, damit Lock-Delay ohne echte Zeit testbar ist. */
+    this._now = opts.now ?? Date.now;
+    this.lockDelay = opts.lockDelay ?? LOCK_DELAY_MS;
+    this.maxLockResets = opts.maxLockResets ?? MAX_LOCK_RESETS;
     this.reset();
   }
 
@@ -115,8 +123,48 @@ export class Tetris {
     this.hold = null;
     this.canHold = true; // darf im Reset initial true sein
     this.current = null;
+    this._clearLockState();
     this._refillQueue();
     this.spawn();
+  }
+
+  // ---- Lock-Delay ----
+  // Ein Stück, das aufsetzt, lockt nicht sofort: es bleibt `lockDelay` ms
+  // beweglich. Das ist der Unterschied zwischen „fällt und klebt" und einem
+  // Spiel, in dem man noch einschieben und drehen kann (Slides, T-Spins).
+
+  _clearLockState() {
+    this.grounded = false;
+    this.lockAt = null;
+    this.lockResets = 0;
+  }
+
+  /** Steht das Stück auf dem Stapel/Boden? */
+  _onGround() {
+    return this._collides(this.current, 1, 0, 0);
+  }
+
+  /**
+   * Nach jeder erfolgreichen Bewegung/Drehung aufzurufen.
+   * Setzt den Lock-Timer zurück — aber nur begrenzt oft, sonst könnte man
+   * durch endloses Wackeln das Stück nie festsetzen lassen (Infinity-Stall).
+   */
+  _afterMove() {
+    if (!this._onGround()) {
+      // Wieder in der Luft: Timer stoppt. Das Reset-Budget wird NICHT
+      // aufgefüllt — sonst wäre das Stall-Schlupfloch nur umständlicher.
+      this.grounded = false;
+      this.lockAt = null;
+      return;
+    }
+    if (!this.grounded) {
+      this.grounded = true;
+      this.lockAt = this._now() + this.lockDelay;
+    } else if (this.lockResets < this.maxLockResets) {
+      this.lockResets++;
+      this.lockAt = this._now() + this.lockDelay;
+    }
+    // Budget aufgebraucht: lockAt bleibt stehen und läuft ab.
   }
 
   // ---- Randomizer: 7-Bag ----
@@ -178,6 +226,7 @@ export class Tetris {
     if (this.gameOver) return false;
     if (!this._collides(this.current, 0, dir, 0)) {
       this.current.col += dir;
+      this._afterMove();
       return true;
     }
     return false;
@@ -196,22 +245,36 @@ export class Tetris {
         this.current.row += dy;
         this.current.col += x;
         this.current.rot = to;
+        this._afterMove();
         return true;
       }
     }
     return false;
   }
 
-  /** Soft-Drop: 1 nach unten. +1 Punkt. Gibt true zurück wenn bewegt. */
+  /**
+   * Soft-Drop: 1 nach unten. +1 Punkt. Gibt true zurück wenn bewegt.
+   * Setzt am Boden NICHT sofort fest — der Lock-Delay läuft weiter, sonst
+   * würde ein versehentlicher Tastendruck am Boden das Stück einfrieren.
+   */
   softDrop() {
     if (this.gameOver) return false;
     if (!this._collides(this.current, 1, 0, 0)) {
       this.current.row += 1;
       this.score += 1;
+      this._afterMove();
       return true;
     }
-    this._lock();
+    this._touchGround();
     return false;
+  }
+
+  /** Erstkontakt mit dem Boden: Lock-Timer starten (ohne Reset-Verbrauch). */
+  _touchGround() {
+    if (!this.grounded) {
+      this.grounded = true;
+      this.lockAt = this._now() + this.lockDelay;
+    }
   }
 
   /** Hard-Drop: fällt ganz runter, +2 Punkte/Zeile, sofort Lock. */
@@ -225,14 +288,17 @@ export class Tetris {
     return dist;
   }
 
-  /** Ein Gravitations-Schritt (von der TUI-Timer aufgerufen). */
+  /** Ein Gravitations-Schritt (vom TUI-Timer aufgerufen). */
   step() {
     if (this.gameOver) return;
     if (!this._collides(this.current, 1, 0, 0)) {
       this.current.row += 1;
-    } else {
-      this._lock();
+      this.grounded = false;
+      this.lockAt = null;
+      return;
     }
+    this._touchGround();
+    if (this._now() >= this.lockAt) this._lock();
   }
 
   /** Aktuelles Stück ins Board einbetten + Linien prüfen + nächstes Spawn. */
@@ -248,6 +314,7 @@ export class Tetris {
       this.score += lineScore(cleared, this.level);
       this.level = Math.floor(this.lines / 10);
     }
+    this._clearLockState();
     this.spawn();
     this.canHold = true; // nach natürlichem Lock wieder halten erlaubt
   }
@@ -269,6 +336,7 @@ export class Tetris {
   holdPiece() {
     if (this.gameOver || !this.canHold) return false;
     this.canHold = false;
+    this._clearLockState(); // das neue Stück startet mit frischem Budget
     const cur = this.current.type;
     if (this.hold == null) {
       this.hold = cur;
@@ -329,6 +397,7 @@ export class Tetris {
       lines: this.lines,
       level: this.level,
       gameOver: this.gameOver,
+      grounded: this.grounded,
     };
   }
 }

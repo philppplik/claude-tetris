@@ -12,7 +12,9 @@
 import process from "node:process";
 import fs from "node:fs";
 import { Tetris, WIDTH, HEIGHT, SHAPES } from "./core.mjs";
+import { AutoShift, autoShiftFromEnv, TO_WALL } from "./autoshift.mjs";
 import { getStatePath, readState, STATES } from "../lib/signal.mjs";
+import { readHighscore, writeHighscore } from "../lib/highscore.mjs";
 
 // ---- Colors (Truecolor) per piece type ----
 const COLORS = {
@@ -49,8 +51,13 @@ const MUTE = [120, 130, 150]; // muted text
 const BRIGHT = [230, 235, 245]; // bright text
 
 export class TetrisTUI {
-  constructor({ rng, signal = true, out = null } = {}) {
-    this.game = new Tetris({ rng });
+  constructor({ rng, signal = true, out = null, now = null, autoShift = null, highscore = true } = {}) {
+    this._clock = now ?? Date.now; // injizierbar für Tests
+    this.game = new Tetris({ rng, now: this._clock });
+    this.autoShift = autoShift ?? autoShiftFromEnv();
+    this.useHighscore = highscore;
+    this.highscore = highscore ? readHighscore() : { score: 0 };
+    this._recordSaved = false; // pro Runde nur einmal speichern
     this.out = out ?? process.stdout; // injectable for tests
     this.running = false;
     this.manualPause = false;
@@ -109,6 +116,7 @@ export class TetrisTUI {
     this.gravityTimer = setInterval(() => {
       if (this.paused) return;
       this.game.step();
+      this._saveRecordIfOver();
       this._render();
     }, interval);
   }
@@ -157,7 +165,10 @@ export class TetrisTUI {
 
     if (this.game.gameOver) {
       if (s === "r") {
+        this._saveRecordIfOver();
         this.game.reset();
+        this.autoShift.reset();
+        this._recordSaved = false;
         this._startGravity();
         this._render();
       }
@@ -173,8 +184,8 @@ export class TetrisTUI {
 
     let acted = false;
     switch (s) {
-      case "\x1b[D": acted = this.game.move(-1); break;
-      case "\x1b[C": acted = this.game.move(1); break;
+      case "\x1b[D": acted = this._shift(-1, "left"); break;
+      case "\x1b[C": acted = this._shift(1, "right"); break;
       case "\x1b[B": acted = this.game.softDrop(); break;
       case "\x1b[A":
       case "x":
@@ -190,6 +201,38 @@ export class TetrisTUI {
       case "C": acted = this.game.holdPiece(); break;
     }
     if (acted || s === " ") this._render();
+  }
+
+  /**
+   * Bei Game Over einmal den Rekord festhalten. Idempotent, weil sowohl der
+   * Gravitations-Timer als auch der Restart hier reinlaufen können.
+   */
+  _saveRecordIfOver() {
+    if (!this.useHighscore || !this.game.gameOver || this._recordSaved) return;
+    this._recordSaved = true;
+    const { record } = writeHighscore({
+      score: this.game.score,
+      lines: this.game.lines,
+      level: this.game.level,
+    });
+    this.highscore = record;
+  }
+
+  /**
+   * Seitwärtsbewegung mit DAS/ARR. Bei ARR=0 liefert AutoShift TO_WALL und
+   * das Stück rutscht in einem Rutsch bis an die Wand bzw. den Stapel.
+   */
+  _shift(dir, key) {
+    const cells = this.autoShift.press(key, this._clock());
+    if (cells === 0) return false;
+    if (cells === TO_WALL) {
+      let moved = false;
+      while (this.game.move(dir)) moved = true;
+      return moved;
+    }
+    let moved = false;
+    for (let i = 0; i < cells; i++) moved = this.game.move(dir) || moved;
+    return moved;
   }
 
   // ---- Responsive layout (computed from terminal size) ----
@@ -350,6 +393,12 @@ export class TetrisTUI {
     st("SCORE", this.game.score);
     st("LEVEL", this.game.level);
     st("LINES", this.game.lines);
+    if (this.useHighscore) {
+      // Während der Runde zählt der laufende Score mit, sobald er den Rekord
+      // überholt — sonst stünde dort kleiner als der eigene aktuelle Stand.
+      const best = Math.max(this.highscore.score || 0, this.game.score);
+      st("BEST", best);
+    }
   }
 
   _drawStatus(out, f) {

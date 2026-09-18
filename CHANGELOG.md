@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Lock delay** (500 ms, max 15 resets). A piece that lands stays movable, so
+  slides and spin finishes are possible. The reset budget is capped so wiggling
+  cannot stall a piece forever.
+- **DAS/ARR** with modern competitive defaults (DAS 100 ms, ARR 0): tap to nudge
+  one cell, hold to slide to the wall. Tunable via `CLAUDE_TETRIS_DAS` and
+  `CLAUDE_TETRIS_ARR`.
+- **Persistent highscore** in `~/.claude-tetris/highscore.json`, shown as `BEST`
+  in the side panel. Written atomically; a corrupt file never blocks the game.
+- **Pause on permission prompts** via the `Notification` hook, so a prompt is not
+  missed while playing. Disable with `CLAUDE_TETRIS_PAUSE_ON_PERMISSION=0`.
+
+### Fixed
+
+- `install.mjs` and `uninstall.mjs` called `main()` at module level, so merely
+  importing them edited the user's real `~/.claude/settings.json`. They now only
+  run when executed directly, guarded by `lib/direct-run.mjs` and a regression
+  test.
+
 ## [0.2.0] - 2026-09-18
 
 ### Added
