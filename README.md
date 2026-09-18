@@ -120,7 +120,8 @@ claude-tetris --help       # all commands
 
 `launch` takes an optional project path and `--backend=<wt|tmux|iterm|kitty|wezterm>`
 to override auto-detection. Add `--dry-run` to print the command without opening
-anything.
+anything; combined with `--backend=` it shows that backend's command even on a
+machine where it would not run.
 
 ### Supported terminals
 

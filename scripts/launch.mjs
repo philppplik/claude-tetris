@@ -35,12 +35,16 @@ const plan = planLaunch({
   pluginDir: PLUGIN_DIR,
   platform: process.platform,
   env: process.env,
-  has: dryRun ? () => true : has,
+  has,
   prefer,
+  // --dry-run --backend=X zeigt X's Kommando auch dort, wo X nicht läuft.
+  // Ein blankes --dry-run prüft dagegen echt: sonst verspräche es eine Pane,
+  // die der echte Lauf gar nicht öffnen kann.
+  force: dryRun && Boolean(prefer),
 });
 
 if (!plan.backend) {
-  console.error(`❌ ${plan.reason}\n`);
+  console.error(`${plan.reason}\n`);
   console.error(fallbackHelp(process.platform));
   process.exit(1);
 }
@@ -51,7 +55,7 @@ if (dryRun) {
   process.exit(0);
 }
 
-console.log(`🚀 Starte Split-Pane via ${plan.backend}…`);
+console.log(`Opening the split pane via ${plan.backend}...`);
 console.log(`   Claude Code:   ${projectDir}`);
 console.log(`   claude-tetris: ${PLUGIN_DIR}`);
 console.log("");
@@ -60,13 +64,13 @@ console.log("");
 // ';' als Separator und zerlegt die Quotes.
 const r = spawnSync(plan.command, plan.args, { stdio: "inherit", shell: false });
 if (r.error) {
-  console.error(`❌ Konnte ${plan.command} nicht starten: ${r.error.message}`);
+  console.error(`Could not start ${plan.command}: ${r.error.message}`);
   process.exit(1);
 }
 if (r.status !== 0) {
-  console.error(`❌ ${plan.command} endete mit Code ${r.status}.`);
+  console.error(`${plan.command} exited with code ${r.status}.`);
   process.exit(r.status ?? 1);
 }
 
-console.log("✅ Pane offen. Tetris pausiert automatisch, sobald Claude fertig ist.");
-console.log("   (Q oder Strg+C in der Tetris-Pane beendet das Spiel.)");
+console.log("Pane open. Tetris pauses automatically once Claude is done.");
+console.log("   (Q or Ctrl+C in the Tetris pane quits the game.)");

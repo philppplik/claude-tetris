@@ -21,6 +21,9 @@ export const BACKENDS = ["wt", "tmux", "iterm", "kitty", "wezterm"];
  * @param {Record<string,string>} [o.env]   process.env (für TMUX-Erkennung)
  * @param {number} [o.size]       Breitenanteil der Tetris-Pane (0..1)
  * @param {string} [o.prefer]     Backend erzwingen (--backend=…)
+ * @param {boolean} [o.force]     Verfügbarkeitsprüfung für `prefer` überspringen.
+ *   Nur für --dry-run: „zeig mir, wie das tmux-Kommando aussähe" soll auch auf
+ *   einer Maschine ohne tmux funktionieren.
  * @returns {{backend: string, command: string, args: string[], inherit: boolean}
  *          | {backend: null, reason: string, tried: string[]}}
  */
@@ -33,10 +36,22 @@ export function planLaunch(o) {
     env = {},
     size = 0.38,
     prefer = null,
+    force = false,
   } = o;
 
   const tetris = `node ${q(path.join(pluginDir, "bin", "tetris.mjs"))}`;
   const ctx = { projectDir, pluginDir, tetris, size, env };
+
+  if (prefer && !BUILDERS[prefer]) {
+    return {
+      backend: null,
+      tried: [prefer],
+      reason: `Unknown backend "${prefer}". Available: ${BACKENDS.join(", ")}.`,
+    };
+  }
+  if (prefer && force) {
+    return { backend: prefer, inherit: true, ...BUILDERS[prefer](ctx) };
+  }
 
   const order = prefer ? [prefer] : BACKENDS;
   const tried = [];
@@ -53,8 +68,8 @@ export function planLaunch(o) {
     backend: null,
     tried,
     reason: prefer
-      ? `Backend "${prefer}" ist hier nicht verfügbar.`
-      : "Kein unterstütztes Terminal für Split-Panes gefunden.",
+      ? `Backend "${prefer}" is not usable here.`
+      : "No supported terminal for split panes found.",
   };
 }
 
@@ -158,23 +173,19 @@ function aq(s) {
 
 /** Menschenlesbarer Hinweis, wenn kein Backend passt. */
 export function fallbackHelp(platform) {
-  const lines = [
-    "Kein Terminal mit Split-Panes gefunden.",
-    "",
-    "Unterstützt werden:",
-  ];
+  const lines = ["Supported terminals:"];
   if (platform === "win32") {
-    lines.push("  • Windows Terminal (wt.exe) — aus dem Microsoft Store");
+    lines.push("  - Windows Terminal (wt.exe), from the Microsoft Store");
   } else {
-    lines.push("  • tmux    — starte `tmux`, dann in der Session erneut launchen");
-    lines.push("  • kitty   — mit aktiviertem `allow_remote_control`");
-    lines.push("  • WezTerm — `wezterm cli` läuft nur innerhalb von WezTerm");
-    if (platform === "darwin") lines.push("  • iTerm2  — als aktives Terminal");
+    lines.push("  - tmux     run `tmux` first, then launch from inside the session");
+    lines.push("  - kitty    needs `allow_remote_control` enabled");
+    lines.push("  - WezTerm  `wezterm cli` only works from inside WezTerm");
+    if (platform === "darwin") lines.push("  - iTerm2   must be the active terminal");
   }
   lines.push(
     "",
-    "Alternativ: öffne einfach ein zweites Terminal und starte dort `claude-tetris`.",
-    "Die Pause-Kopplung läuft über die Signal-Datei und funktioniert fensterübergreifend.",
+    "Or just open a second terminal window and run `claude-tetris` there.",
+    "The pause coupling goes through the signal file, so it works across windows too.",
   );
   return lines.join("\n");
 }

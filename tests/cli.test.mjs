@@ -29,8 +29,10 @@ test("--help listet alle Subkommandos", () => {
 });
 
 test("launch delegiert an scripts/launch.mjs (Flags werden durchgereicht)", () => {
-  const out = run(["launch", "--dry-run"]);
-  assert.ok(out.includes("DRY-RUN"), "launch.mjs wurde ausgeführt");
+  // Backend erzwungen, damit der Test nicht davon abhängt, welches Terminal
+  // auf der ausführenden Maschine installiert ist.
+  const out = run(["launch", "--dry-run", "--backend=tmux"]);
+  assert.ok(out.includes("DRY-RUN backend=tmux"), "beide Flags kamen an");
 });
 
 test("install delegiert an scripts/install.mjs", () => {

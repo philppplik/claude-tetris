@@ -88,19 +88,58 @@ test("Pfade mit Leerzeichen werden gequotet", () => {
   assert.ok(joined.includes('"C:/Program Files/ct'), "Plugin-Pfad in Quotes");
 });
 
+test("unbekanntes Backend wird benannt, nicht stillschweigend ignoriert", () => {
+  const p = plan({ prefer: "nope" });
+  assert.equal(p.backend, null);
+  assert.match(p.reason, /Unknown backend "nope"/);
+});
+
+test("force überspringt die Verfügbarkeitsprüfung (nur für --dry-run)", () => {
+  // Ohne force gäbe es hier kein tmux-Kommando zu sehen.
+  const p = plan({ platform: "win32", has: none, env: {}, prefer: "tmux", force: true });
+  assert.equal(p.backend, "tmux");
+  assert.ok(p.args.includes("split-window"));
+});
+
 test("fallbackHelp nennt plattformgerechte Optionen", () => {
   assert.ok(fallbackHelp("win32").includes("Windows Terminal"));
   assert.ok(fallbackHelp("linux").includes("tmux"));
   assert.ok(fallbackHelp("darwin").includes("iTerm2"));
   // Der fensterübergreifende Ausweg muss immer dabeistehen.
   for (const pf of ["win32", "linux", "darwin"]) {
-    assert.ok(fallbackHelp(pf).includes("zweites Terminal"));
+    assert.ok(fallbackHelp(pf).includes("second terminal"));
   }
 });
 
-test("dry-run gibt Backend und Kommando aus, ohne ein Fenster zu öffnen", () => {
-  const out = execFileSync("node", [LAUNCH, "--dry-run"], { encoding: "utf8" });
-  assert.ok(out.includes("DRY-RUN backend="), "nennt das Backend");
+test("dry-run mit erzwungenem Backend gibt das Kommando aus", () => {
+  // Erzwungen, damit der Test auf jeder Plattform dasselbe prüft — ein
+  // blankes --dry-run hängt zu Recht davon ab, was lokal installiert ist.
+  const out = execFileSync("node", [LAUNCH, "--dry-run", "--backend=tmux"], {
+    encoding: "utf8",
+  });
+  assert.ok(out.includes("DRY-RUN backend=tmux"), "nennt das Backend");
+  assert.ok(out.includes("split-window"), "tmux-Kommando gebaut");
   assert.ok(out.includes("tetris.mjs"), "Tetris-Binary im Kommando");
   assert.ok(!out.includes("--dry-run &&"), "Flag nicht als Projektpfad missdeutet");
+});
+
+test("blankes dry-run erkennt echt: entweder Plan oder klarer Fehlschlag", () => {
+  // Kein gefaktes has(): --dry-run darf keine Pane versprechen, die der echte
+  // Lauf nicht öffnen kann. Beide Ausgänge sind korrekt — welcher eintritt,
+  // hängt vom Terminal der ausführenden Maschine ab.
+  let out;
+  let code = 0;
+  try {
+    out = execFileSync("node", [LAUNCH, "--dry-run"], { encoding: "utf8", stdio: "pipe" });
+  } catch (e) {
+    code = e.status;
+    out = String(e.stdout) + String(e.stderr);
+  }
+  if (code === 0) {
+    assert.ok(out.includes("DRY-RUN backend="), "Plan ausgegeben");
+  } else {
+    assert.equal(code, 1);
+    assert.ok(out.includes("No supported terminal"), "nennt den Grund");
+    assert.ok(out.includes("second terminal"), "nennt den Ausweg");
+  }
 });
