@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # The package itself has no runtime or dev dependencies, so only the
+  # workflow actions need watching.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(ci)"

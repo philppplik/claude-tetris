@@ -1,0 +1,46 @@
+name: Publish to npm
+
+# Releases are cut by pushing a tag:
+#   npm version patch|minor|major && git push --follow-tags
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Required for npm provenance: npm verifies the package really came
+      # from this workflow in this repository.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Test before publishing
+        run: node --test
+
+      # A tag that disagrees with package.json would publish the wrong
+      # version under the right name, and npm versions cannot be reused.
+      - name: Check the tag matches package.json
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$PKG" ]; then
+            echo "Tag v$TAG does not match package.json version $PKG." >&2
+            exit 1
+          fi
+          echo "Publishing version $PKG."
+
+      - name: Publish
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

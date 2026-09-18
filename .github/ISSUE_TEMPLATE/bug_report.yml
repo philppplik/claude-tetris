@@ -1,0 +1,61 @@
+name: Bug report
+description: Something does not work as documented
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you expected, and what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run `claude-tetris launch`
+        2. ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part?
+      options:
+        - Game / engine (rotation, scoring, line clears)
+        - Terminal UI (rendering, input, resize)
+        - Launcher (split pane)
+        - Hooks / auto-pause coupling
+        - Install / uninstall
+        - Claude Code plugin or marketplace
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: terminal
+    attributes:
+      label: Terminal
+      description: Which terminal, and which launcher backend if relevant.
+      placeholder: Windows Terminal 1.21 / tmux 3.4 / iTerm2 3.5
+    validations:
+      required: true
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: "Paste the output of: `node -p \"process.platform + ' node ' + process.version\"` and `claude-tetris --version`"
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: launch
+    attributes:
+      label: Launcher output (if the split pane is involved)
+      description: "Paste the output of `claude-tetris launch --dry-run` - it shows the chosen backend and command."
+      render: shell

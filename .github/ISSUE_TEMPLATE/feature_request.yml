@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest an addition or a change
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is the problem?
+      description: Describe the situation, not the solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: This can be built in the headless engine (`game/core.mjs`) and unit-tested
+        - label: This needs terminal UI work
+        - label: This changes the CLI or the hook behaviour
