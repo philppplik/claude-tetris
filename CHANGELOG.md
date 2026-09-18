@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-18
+
+### Added
+
+- **Focus follows the conversation.** Submitting a prompt moves the keyboard
+  focus to the game pane; Claude's reply moves it back. No more clicking between
+  typing and playing. Permission prompts always pull focus back to Claude, so a
+  question is never answered into the game. Disable with `CLAUDE_TETRIS_FOCUS=0`.
+
+  The launcher records which pane is which in `~/.claude-tetris/panes.json`,
+  because the hooks run in a different process later and cannot know.
+
+- **A "terminal too small" screen** instead of a layout torn across the edges.
+
+### Changed
+
+- **Responsive layout.** Panels now drop by priority as the pane narrows —
+  first the key hints, then HOLD, then NEXT — and the board itself is never
+  sacrificed. Status text is truncated rather than wrapped.
+- Ghost piece is drawn as an outline, matching the demo GIF.
+- Double buffering actually skips writes now: an unchanged frame is not
+  redrawn, which stops the gravity timer from flickering a static board.
+
+### Fixed
+
+- **The hold slot was still invisible.** Fixing the engine in 0.3.0 was only
+  half of it — `game/tui.mjs` still read `game.old`, the field that bug
+  introduced, so nothing was ever drawn in the HOLD box.
+- The key-hint line was drawn on top of the bottom border.
+- The "terminal too small" message itself overflowed a narrow terminal.
+
 ## [0.3.1] - 2026-09-18
 
 Documentation only. No code changes — the published package is byte-for-byte
@@ -104,7 +135,8 @@ published, so everything from it ships here.
   an atomically written signal file.
 - Windows Terminal split-pane launcher and a `/tetris` slash command.
 
-[Unreleased]: https://github.com/philppplik/claude-tetris/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/philppplik/claude-tetris/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/philppplik/claude-tetris/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/philppplik/claude-tetris/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/philppplik/claude-tetris/compare/v0.1.0...v0.3.0
 [0.1.0]: https://github.com/philppplik/claude-tetris/releases/tag/v0.1.0

@@ -11,6 +11,8 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { planLaunch, fallbackHelp } from "./launch-plan.mjs";
+import { writePanes } from "../lib/panes.mjs";
+import { focusCommand, focusEnabled } from "../lib/focus.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PLUGIN_DIR = path.resolve(__dirname, "..");
@@ -62,7 +64,14 @@ console.log("");
 
 // shell:false ist wichtig: sonst interpretiert eine weitere Shell-Ebene das
 // ';' als Separator und zerlegt die Quotes.
-const r = spawnSync(plan.command, plan.args, { stdio: "inherit", shell: false });
+// stdout wird abgefangen, weil manche Backends die ID der neuen Pane dort
+// ausgeben — die brauchen wir für den Autofokus.
+const capture = Boolean(plan.panes?.capture);
+const r = spawnSync(plan.command, plan.args, {
+  stdio: capture ? ["inherit", "pipe", "inherit"] : "inherit",
+  shell: false,
+  encoding: "utf8",
+});
 if (r.error) {
   console.error(`Could not start ${plan.command}: ${r.error.message}`);
   process.exit(1);
@@ -72,5 +81,29 @@ if (r.status !== 0) {
   process.exit(r.status ?? 1);
 }
 
+// Pane-Kennungen ablegen: die Hooks laufen später in einem anderen Prozess und
+// wüssten sonst nicht, wohin der Fokus gehört.
+const ids = capture ? String(r.stdout ?? "").trim().split(/\r?\n/).filter(Boolean) : [];
+const panes = {
+  backend: plan.backend,
+  window: plan.panes?.window ?? null,
+  // iTerm liefert beide IDs (erst Claude, dann Spiel), alle anderen nur die neue.
+  claude: plan.panes?.pair ? ids[0] ?? null : plan.panes?.claude ?? null,
+  game: plan.panes?.pair ? ids[1] ?? null : ids[0] ?? null,
+};
+const stored = writePanes(panes);
+
+// Fokus zurück zu Claude: nach dem Start will man tippen, nicht spielen.
+// Bewusst über denselben Weg wie im Spielbetrieb — funktioniert das hier
+// nicht, funktioniert auch der Autofokus später nicht, und das merkt man sofort.
+if (stored && focusEnabled()) {
+  const back = focusCommand(panes, "claude");
+  if (back) spawnSync(back.command, back.args, { stdio: "ignore", shell: false });
+}
+
 console.log("Pane open. Tetris pauses automatically once Claude is done.");
+if (stored && focusEnabled() && focusCommand(panes, "game")) {
+  console.log("   Focus follows you: the game pane on submit, Claude's on reply.");
+  console.log("   Set CLAUDE_TETRIS_FOCUS=0 to keep focus where you put it.");
+}
 console.log("   (Q or Ctrl+C in the Tetris pane quits the game.)");

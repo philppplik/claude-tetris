@@ -51,9 +51,9 @@ test("Hook 'pause' friert das Tetris nach Poll ein", () => {
   assert.equal(ctx.ui.signalPause, true);
   assert.equal(ctx.ui.paused, true, "Tetris pausiert nach Hook-pause");
 
-  // Status-Text im Render spiegelt Pause
-  ctx.sink._buf = "";
-  ctx.ui._render();
+  // Status-Text im Render spiegelt Pause. Kein erneutes _render() und kein
+  // Leeren des Puffers: ein unveränderter Frame wird bewusst unterdrückt,
+  // der Hinweis steht bereits im bisherigen Output.
   const vis = ctx.sink._buf
     .replace(/\x1b\[\d+;\d+H/g, "")
     .replace(/\x1b\[\?25[hl]/g, "")

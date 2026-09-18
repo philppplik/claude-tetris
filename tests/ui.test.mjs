@@ -50,7 +50,8 @@ test("render produziert ANSI-Output ohne Exception", () => {
   const vis = visible(sink._buf);
   assert.ok(vis.length > 0, `Output erzeugt (len=${vis.length})`);
   assert.ok(vis.includes("claude-tetris"), "Titel gerendert");
-  assert.ok(vis.includes("PLAYING"), "Status PLAYING sichtbar");
+  // Am Wortlaut hängen macht jede Textänderung zum Testfehler — der Zustand zählt.
+  assert.match(vis, /playing/i, "Status zeigt den laufenden Zustand");
 });
 
 test("Signal: Pause-Zustand spiegelt sich im Status", () => {
@@ -61,10 +62,21 @@ test("Signal: Pause-Zustand spiegelt sich im Status", () => {
   ctx.ui._refreshSignal();
   assert.equal(ctx.ui.signalPause, true);
   assert.equal(ctx.ui.paused, true);
+  // Nicht neu rendern und den Puffer leeren: _render() unterdrückt einen
+  // identischen Frame bewusst. Der Hinweis steht schon im bisherigen Output.
+  assert.match(visible(ctx.sink._buf), /Claude is done/, "Pause-Hinweis gerendert");
+  cleanup(ctx);
+});
+
+test("identischer Frame wird nicht erneut geschrieben", () => {
+  const ctx = makeUI();
   ctx.sink._buf = "";
   ctx.ui._render();
-  assert.ok(visible(ctx.sink._buf).includes("Claude is done"),
-    "Pause-Hinweis gerendert");
+  assert.equal(ctx.sink._buf, "", "kein Schreibvorgang ohne Änderung");
+  // Nach einer echten Änderung aber schon.
+  ctx.ui.game.move(-1);
+  ctx.ui._render();
+  assert.ok(ctx.sink._buf.length > 0, "Änderung wird gezeichnet");
   cleanup(ctx);
 });
 

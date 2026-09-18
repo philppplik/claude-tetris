@@ -41,8 +41,10 @@ const ALT_OFF = `${ESC}?1049l`;
 const rgb = ([r, g, b]) => `${ESC}38;2;${r};${g};${b}m`;
 
 const BLOCK = "██"; // 2-wide blocks for a "denser" field
-const GHOST = "▒"; // semi-transparent ghost block
+const GHOST = "▢ "; // landing preview — outline, like the demo GIF
 const DIM = `${ESC}2m`; // dim (faded)
+const GRID = [32, 38, 48]; // empty cell dots, barely there
+const GHOST_C = [88, 101, 124]; // ghost outline
 
 // ---- Layout constants (flexible raster, computed from terminal size) ----
 const BORDER = [90, 100, 120]; // border color
@@ -236,38 +238,114 @@ export class TetrisTUI {
   }
 
   // ---- Responsive layout (computed from terminal size) ----
+  //
+  // Der Tetris-Pane ist oft schmal. Statt über den Rand zu zeichnen, fallen
+  // Panels nach Priorität weg: erst die Steuerungs-Hilfe, dann die HOLD-Spalte,
+  // dann die NEXT-Vorschau. Das Spielfeld selbst ist unverhandelbar.
   _computeFrame() {
-    const cols = (this.out.columns || 80);
-    const rows = (this.out.rows || 30);
-    const left = Math.max(1, Math.floor((cols - (WIDTH * 2 + 30)) / 2));
-    const top = Math.max(1, Math.floor((rows - (HEIGHT + 8)) / 2));
+    const cols = this.out.columns || 80;
+    const rows = this.out.rows || 30;
+
+    const innerW = WIDTH * 2 + 2; // Spielfeld: 2 Zeichen pro Zelle
     const holdW = 6;
-    const innerW = WIDTH * 2 + 2;
-    const panelW = 18;
+    const panelW = 12;
     const gap = 1;
-    const right = left + 1 + holdW + innerW + gap + panelW + 1;
-    const bottom = top + 1 + HEIGHT + 4;
-    return { top, left, holdW, innerW, panelW, gap, right, bottom, cols, rows };
+    const chrome = 2; // Rahmen links und rechts
+
+    // Was passt noch rein?
+    const withAll = chrome + holdW + innerW + gap + panelW;
+    const withPanel = chrome + innerW + gap + panelW;
+    const bare = chrome + innerW;
+
+    const showHold = cols >= withAll;
+    const showPanel = cols >= withPanel;
+    const tooSmall = cols < bare || rows < HEIGHT + 6;
+
+    const usedHold = showHold ? holdW : 0;
+    const usedPanel = showPanel ? gap + panelW : 0;
+    const width = chrome + usedHold + innerW + usedPanel;
+
+    const left = Math.max(1, Math.floor((cols - width) / 2) + 1);
+    const headerH = rows >= HEIGHT + 8 ? 2 : 0; // Titelzeile nur wenn Platz ist
+    const showHint = rows >= HEIGHT + 9 && cols >= 70;
+    const statusH = 2 + (showHint ? 1 : 0);
+    const top = Math.max(1, Math.floor((rows - (HEIGHT + headerH + statusH + 2)) / 2) + 1);
+
+    // Wie viele NEXT-Steine passen untereinander? Jeder braucht 3 Zeilen.
+    const nextSpace = HEIGHT - 8;
+    const nextCount = Math.max(1, Math.min(5, Math.floor(nextSpace / 3)));
+
+    const right = left + width - 1;
+
+    // Zeilen explizit durchnummerieren statt sie an drei Stellen neu
+    // auszurechnen — genau so ist die Hinweiszeile vorher auf dem unteren
+    // Rahmen gelandet.
+    const boardRow = top + headerH + 1;
+    const sepRow = boardRow + HEIGHT;
+    const msgRow = sepRow + 1;
+    const hintRow = showHint ? msgRow + 1 : null;
+    const bottom = (hintRow ?? msgRow) + 1;
+
+    return {
+      top, left, right, bottom, cols, rows,
+      holdW: usedHold, innerW, panelW, gap,
+      showHold, showPanel, showHint, headerH, nextCount, tooSmall,
+      boardRow, sepRow, msgRow, hintRow,
+      // innerW hat 2 Spalten Reserve — je eine links und rechts, sonst klebt
+      // das Feld am Rahmen und die Luft sammelt sich auf einer Seite.
+      boardCol: left + 2 + usedHold,
+    };
+  }
+
+  /** Zu kleines Terminal: ehrliche Ansage statt zerrissenem Layout. */
+  _drawTooSmall(out, f) {
+    const need = `${WIDTH * 2 + 4}x${HEIGHT + 6}`;
+    // Die Meldung muss selbst in das zu kleine Terminal passen — sonst laeuft
+    // ausgerechnet der Ueberlauf-Hinweis ueber den Rand. Je enger, desto kuerzer.
+    const lines =
+      f.cols >= 26
+        ? ["Terminal too small", `need ${need}, have ${f.cols}x${f.rows}`, "resize or press F11"]
+        : ["too small", `${f.cols}x${f.rows}`, `need ${need}`];
+    lines.forEach((text, i) => {
+      const t = this._fit(text, f.cols);
+      const c = Math.max(1, Math.floor((f.cols - t.length) / 2) + 1);
+      const r = Math.max(1, Math.floor(f.rows / 2) - 1 + i);
+      out.push(this._xy(r, c) + rgb(i === 0 ? COLORS.Z : MUTE) + t + RESET);
+    });
   }
 
   // ---- Rendering (double-buffered) ----
   _render() {
-    const out = [];
-    out.push(HOME);
+    const out = [CLEAR, HOME];
     const frame = this._computeFrame();
     this._frame = frame;
-    this._drawFrame(out, frame);
-    this._drawHeader(out, frame);
-    this._drawBoard(out, frame);
-    this._drawPanel(out, frame);
-    this._drawStatus(out, frame);
+
+    if (frame.tooSmall) {
+      this._drawTooSmall(out, frame);
+    } else {
+      this._drawFrame(out, frame);
+      if (frame.headerH) this._drawHeader(out, frame);
+      this._drawBoard(out, frame);
+      this._drawPanel(out, frame);
+      this._drawStatus(out, frame);
+    }
+
     const next = out.join("");
+    // Double-Buffering: identische Frames gar nicht erst schreiben. Der
+    // Gravitations-Timer feuert auch, wenn sich nichts bewegt hat.
+    if (next === this._prev) return;
     this.out.write(next);
     this._prev = next;
   }
 
   _xy(r, c) {
     return `${ESC}${r};${c}H`;
+  }
+
+  /** Schneidet Text auf die verfügbare Breite, damit nie über den Rahmen gemalt wird. */
+  _fit(text, width) {
+    if (width <= 0) return "";
+    return text.length <= width ? text : text.slice(0, Math.max(0, width - 1)) + "…";
   }
 
   _drawFrame(out, f) {
@@ -283,33 +361,29 @@ export class TetrisTUI {
   _drawHeader(out, f) {
     const b = rgb(BORDER);
     const y = f.top + 1;
-    out.push(
-      this._xy(y, f.left + 1) +
-        rgb(COLORS.T) +
-        "▮ " +
-        TITLE +
-        RESET +
-        rgb(MUTE) +
-        "  — playable while Claude Code works" +
-        RESET
-    );
-    out.push(this._xy(y + 1, f.left) + b + "╟" + "─".repeat(f.right - f.left - 2) + "╢" + RESET);
+    const inner = f.right - f.left - 1;
+    // Untertitel nur, wenn er wirklich passt — sonst bricht er den Rahmen.
+    const sub = "  playable while Claude Code works";
+    const head = rgb(COLORS.T) + "▮ " + TITLE + RESET +
+      (inner >= TITLE.length + sub.length + 4 ? rgb(MUTE) + sub + RESET : "");
+    out.push(this._xy(y, f.left + 1) + head);
+    out.push(this._xy(y + 1, f.left) + b + "╟" + "─".repeat(inner - 1) + "╢" + RESET);
   }
 
   _drawBoard(out, f) {
-    const r0 = f.top + 3;
-    const c0 = f.left + 1 + f.holdW + 1;
+    const r0 = f.boardRow;
+    const c0 = f.boardCol;
     const view = this.game.getView();
     for (let r = 0; r < HEIGHT; r++) {
       let line = this._xy(r0 + r, c0);
       for (let c = 0; c < WIDTH; c++) {
         const v = view[r][c];
+        // Jede Zelle MUSS 2 Zeichen breit sein — sonst variiert die Zeilenlaenge
+        // mit der Stueckposition und hinterlaesst Farbschlieren.
         if (v === "." || v === 0) {
-          // Every cell MUST be 2 chars wide (BLOCK is 2 cells). Otherwise the
-          // row length varies with piece position and leaves color trails.
-          line += rgb(COLORS.G) + "· " + RESET;
+          line += rgb(GRID) + "· " + RESET;
         } else if (v === "G") {
-          line += DIM + rgb(COLORS.G) + "▒ " + RESET;
+          line += rgb(GHOST_C) + GHOST + RESET;
         } else {
           line += rgb(COLORS[v]) + BLOCK + RESET;
         }
@@ -320,8 +394,8 @@ export class TetrisTUI {
   }
 
   _drawGameOver(out, f) {
-    const r0 = f.top + 3;
-    const c0 = f.left + 1 + f.holdW + 1;
+    const r0 = f.boardRow;
+    const c0 = f.boardCol;
     const boxW = WIDTH * 2; // covers the whole board (20 cols)
     const boxH = 9;
     const br = r0 + Math.floor((HEIGHT - boxH) / 2);
@@ -367,22 +441,27 @@ export class TetrisTUI {
   }
 
   _drawPanel(out, f) {
-    const holdX = f.left + 2;
-    const panelX = f.left + 1 + f.holdW + 1 + f.innerW + f.gap + 1;
+    const holdX = f.left + 1;
+    const panelX = f.boardCol + f.innerW + f.gap;
 
-    out.push(this._xy(f.top + 3, holdX) + rgb(MUTE) + "HOLD" + RESET);
-    if (this.game.old) this._miniPiece(out, f.top + 4, holdX, this.game.old);
+    if (f.showHold) {
+      out.push(this._xy(f.boardRow, holdX) + rgb(MUTE) + "HOLD" + RESET);
+      // War this.game.old — der Rest eines Engine-Bugs, weshalb der
+      // Hold-Slot in der TUI nie sichtbar war.
+      if (this.game.hold) this._miniPiece(out, f.boardRow + 1, holdX, this.game.hold);
+    }
+    if (!f.showPanel) return;
 
-    out.push(this._xy(f.top + 3, panelX) + rgb(MUTE) + "NEXT" + RESET);
-    const next = this.game.queue.slice(0, 5);
-    next.forEach((t, i) => this._miniPiece(out, f.top + 4 + i * 3, panelX, t));
+    out.push(this._xy(f.boardRow, panelX) + rgb(MUTE) + "NEXT" + RESET);
+    const next = this.game.queue.slice(0, f.nextCount);
+    next.forEach((t, i) => this._miniPiece(out, f.boardRow + 1 + i * 3, panelX, t));
 
-    let sy = f.top + 4 + next.length * 3 + 1;
+    let sy = f.boardRow + 2 + next.length * 3;
     const st = (label, val) => {
       out.push(
         this._xy(sy, panelX) +
           rgb(MUTE) +
-          label.padEnd(7) +
+          label.padEnd(6) +
           RESET +
           rgb(BRIGHT) +
           val +
@@ -403,26 +482,31 @@ export class TetrisTUI {
 
   _drawStatus(out, f) {
     const b = rgb(BORDER);
-    out.push(this._xy(f.bottom - 3, f.left) + b + "╟" + "─".repeat(f.right - f.left - 2) + "╢" + RESET);
-    const y = f.bottom - 2;
+    const inner = f.right - f.left - 1;
+    out.push(this._xy(f.sepRow, f.left) + b + "╟" + "─".repeat(inner - 1) + "╢" + RESET);
+    const y = f.msgRow;
     let msg = "";
     let color = MUTE;
     if (this.game.gameOver) {
-      msg = "✖ GAME OVER — press R for new game";
+      msg = "GAME OVER — R to restart";
       color = COLORS.Z;
     } else if (this.signalPause) {
-      msg = "⏸ Claude is done — waiting for next prompt…";
+      msg = "⏸ Claude is done — waiting for your next prompt";
       color = COLORS.O;
     } else if (this.manualPause) {
-      msg = "⏸ Paused (P to resume)";
+      msg = "⏸ Paused — P to resume";
       color = COLORS.O;
     } else {
-      msg = "▶ PLAYING — Pause P · Quit Q";
+      msg = "▶ Playing while Claude works";
       color = COLORS.S;
     }
-    out.push(this._xy(y, f.left + 1) + rgb(color) + msg + RESET);
-    const hint = "←→ move · ↑/X rotate · ↓ soft · Space hard · C hold · F11 fullscreen (recommended)";
-    out.push(this._xy(y + 1, f.left + 1) + rgb([90, 100, 120]) + hint + RESET);
+    out.push(this._xy(y, f.left + 1) + rgb(color) + this._fit(msg, inner - 1) + RESET);
+    if (!f.showHint || f.hintRow === null) return;
+    // Lange Hilfe nur bei breitem Pane, sonst die Kurzfassung.
+    const long = "←→ move · ↑/X rotate · ↓ soft · Space hard · C hold · P pause · Q quit";
+    const short = "←→ ↑ ↓ · Space drop · C hold · Q quit";
+    const hint = inner - 1 >= long.length ? long : short;
+    out.push(this._xy(f.hintRow, f.left + 1) + rgb(BORDER) + this._fit(hint, inner - 1) + RESET);
   }
 }
 
