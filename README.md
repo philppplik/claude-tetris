@@ -26,6 +26,9 @@ for long coding sessions.
 - 🎯 **SRS rotation** + wall kicks (exact Super Rotation System)
 - 🎲 **7-bag randomizer** for fair piece distribution
 - 👻 **Ghost piece**, **hold**, hard / soft drop
+- ⏱ **Lock delay** (500 ms, 15 resets) — slide and spin a piece after it lands
+- ⚡ **DAS / ARR** with modern competitive defaults — tap to nudge, hold to slam
+- 🏆 **Persistent highscore**, survives closing the pane
 - ⏸ **Auto-pause coupling** via Claude Code hooks — no polling, just `fs.watch`
 - 🖥 **Split-pane on any terminal** — Windows Terminal, tmux, iTerm2, kitty, WezTerm
 - 📐 **Responsive TUI** that recomputes on resize (SIGWINCH)
@@ -88,6 +91,26 @@ Claude Code  ──hook──▶  state.json  ──fs.watch──▶  Tetris TU
 | ------------------ | --------------------- | ---------- |
 | `UserPromptSubmit` | `claude-tetris play`  | ▶ resumes  |
 | `Stop`             | `claude-tetris pause` | ⏸ freezes  |
+| `Notification`     | `claude-tetris notify`| ⏸ freezes (permission prompt) |
+
+---
+
+## ⚙️ Tuning
+
+| Variable | Default | What it does |
+| -------- | ------- | ------------ |
+| `CLAUDE_TETRIS_DAS` | `100` | Delayed Auto Shift in ms — charge time before a held key repeats |
+| `CLAUDE_TETRIS_ARR` | `0` | Auto Repeat Rate in ms — `0` slides the piece straight to the wall |
+| `CLAUDE_TETRIS_PAUSE_ON_PERMISSION` | on | Set to `0` to keep playing through permission prompts |
+| `CLAUDE_TETRIS_DIR` | `~/.claude-tetris` | Where the signal file and highscore live |
+
+**A note on DAS in a terminal.** A terminal in raw mode delivers key-*down* events
+only — there is no key-up. Holding a key is therefore inferred from the operating
+system's own auto-repeat stream, whose initial delay (typically 250–500 ms) is a
+floor we cannot go below. `CLAUDE_TETRIS_DAS` applies *after* auto-repeat is
+detected. What is fully under our control is what happens next, and that is the
+larger part of the feel: with `ARR=0` the piece slides to the wall in one motion.
+A deliberate double-tap never triggers a slide.
 
 ---
 
