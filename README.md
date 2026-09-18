@@ -13,7 +13,6 @@ for long coding sessions.
 [![npm version](https://img.shields.io/npm/v/claude-tetris.svg)](https://www.npmjs.com/package/claude-tetris)
 [![npm downloads](https://img.shields.io/npm/dm/claude-tetris.svg)](https://www.npmjs.com/package/claude-tetris)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![tests: 44 passing](https://img.shields.io/badge/tests-44%20passing-brightgreen.svg)](#)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 
@@ -27,9 +26,8 @@ for long coding sessions.
 - 🎲 **7-bag randomizer** for fair piece distribution
 - 👻 **Ghost piece**, **hold**, hard / soft drop
 - ⏸ **Auto-pause coupling** via Claude Code hooks — no polling, just `fs.watch`
-- 🖥 **Windows Terminal split-pane** (Claude left, Tetris right)
+- 🖥 **Split-pane on any terminal** — Windows Terminal, tmux, iTerm2, kitty, WezTerm
 - 📐 **Responsive TUI** that recomputes on resize (SIGWINCH)
-- 🌐 **Showcase website** in [`web/`](web/README.md) — Claude-style, interactive canvas Tetris
 - ⌨️ **`/tetris` slash command** for Claude Code
 
 ---
@@ -102,8 +100,29 @@ Claude Code  ──hook──▶  state.json  ──fs.watch──▶  Tetris TU
 claude-tetris              # play now (current terminal)
 claude-tetris install      # install Claude Code hooks
 claude-tetris uninstall    # remove hooks
-claude-tetris launch       # open Windows Terminal split pane
+claude-tetris launch       # open a split pane in your terminal
+claude-tetris --version    # print version
+claude-tetris --help       # all commands
 ```
+
+`launch` takes an optional project path and `--backend=<wt|tmux|iterm|kitty|wezterm>`
+to override auto-detection. Add `--dry-run` to print the command without opening
+anything.
+
+### Supported terminals
+
+`launch` picks the first backend that can actually split **the window you are in**:
+
+| Terminal             | Platform | Requirement                                  |
+| -------------------- | -------- | -------------------------------------------- |
+| **Windows Terminal** | Windows  | `wt.exe` on `PATH`                            |
+| **tmux**             | macOS/Linux | run it from *inside* a tmux session         |
+| **iTerm2**           | macOS    | iTerm2 is the active terminal                 |
+| **kitty**            | macOS/Linux | `allow_remote_control` enabled             |
+| **WezTerm**          | any      | run it from inside WezTerm                    |
+
+No supported terminal? Open a second window and run `claude-tetris` there. The
+pause coupling goes through the signal file, so it works across windows just as well.
 
 Equivalent npm scripts:
 
@@ -112,8 +131,7 @@ npm start                  # play now
 npm run install:hooks      # install hooks
 npm run uninstall:hooks    # remove hooks
 npm run launch             # open split pane
-npm run dev                # serve the showcase website (web/)
-npm test                   # run the 44 unit tests
+npm test                   # run the unit tests
 ```
 
 ---
@@ -130,13 +148,13 @@ claude-tetris/
 ├── scripts/
 │   ├── install.mjs       # merge hooks into ~/.claude/settings.json
 │   ├── uninstall.mjs     # remove claude-tetris hooks only
-│   ├── launch.mjs        # Windows Terminal split-pane launcher
+│   ├── launch.mjs        # split-pane launcher (executes the plan)
+│   ├── launch-plan.mjs   # pure backend selection: wt / tmux / iTerm2 / kitty / wezterm
 │   └── tetris-signal.mjs # hook bridge: play / pause / status
 ├── claude-code/          # plugin manifest + command + hooks template
 ├── install.bat           # double-click Windows installer
 ├── uninstall.bat         # double-click Windows uninstaller
-├── web/                  # showcase website (static HTML/CSS/JS)
-└── tests/                # 44 unit tests (node --test)
+└── tests/                # unit tests (node --test)
 ```
 
 **Key design decisions**
@@ -153,8 +171,7 @@ claude-tetris/
 ```bash
 git clone https://github.com/philppplik/claude-tetris.git
 cd claude-tetris
-npm test            # 44 tests, ~1s
-npm run dev         # open the showcase site at http://localhost:8137
+npm test            # full suite, ~2s
 ```
 
 ---

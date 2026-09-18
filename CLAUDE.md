@@ -18,7 +18,8 @@ claude-tetris/
 ├── scripts/
 │   ├── install.mjs   # Merges hooks into ~/.claude/settings.json
 │   ├── uninstall.mjs # Removes claude-tetris hooks only
-│   ├── launch.mjs    # Windows Terminal split-pane launcher
+│   ├── launch.mjs    # Split-pane launcher (executes the plan)
+│   ├── launch-plan.mjs # Pure backend selection (wt/tmux/iTerm2/kitty/wezterm)
 │   └── tetris-signal.mjs # Hook bridge: play/pause/status commands
 ├── bin/
 │   └── tetris.mjs    # Binary entry point (npx claude-tetris)
@@ -33,15 +34,16 @@ claude-tetris/
 2. **TUI Wrapper** (`game/tui.mjs`) - Handles ANSI rendering, raw keyboard, game loop, and signal polling every 100ms
 3. **Signal Channel** (`lib/signal.mjs`) - Atomic JSON file writes via temp+rename, tolerant reads. Avoids Windows socket/pipe limitations.
 4. **Hook Merge Strategy** - Installs don't overwrite existing hooks; backups are created automatically.
+5. **Launcher Split** (`scripts/launch-plan.mjs`) - Backend selection is a pure function taking `platform`/`env`/`has()`, so every terminal backend is testable from any machine. `launch.mjs` only executes the returned plan.
 
 ## Development Commands
 
 ```bash
 npm start           # Run Tetris in current terminal
-npm test            # Run all tests (44 tests, ~1s)
+npm test            # Run all tests
 npm run install:hooks    # Install hooks into ~/.claude/settings.json
 npm run uninstall:hooks  # Remove claude-tetris hooks
-npm run launch      # Open Windows Terminal split-pane (Claude left, Tetris right)
+npm run launch      # Open a split pane (Claude left, Tetris right)
 ```
 
 ### Single Test Execution
@@ -51,12 +53,15 @@ node --test tests/core.test.mjs
 node --test tests/ghost.test.mjs
 node --test tests/ui.test.mjs
 node --test tests/integration.test.mjs
+node --test tests/launch.test.mjs
+node --test tests/cli.test.mjs
 ```
 
 ## Testing Strategy
 
 - **Node.js built-in test runner** - No external test framework dependency
-- **44 tests covering**: SRS rotation, line clears, 7-bag randomizer, game over, hold, ghost piece, rendering, keyboard input, pause integration, install/uninstall
+- **Covered**: SRS rotation, line clears, 7-bag randomizer, game over, hold, ghost piece, rendering, keyboard input, pause integration, install/uninstall, launcher backend selection, CLI dispatch
+- **No machine-dependent tests** - never seed a fixture from the user's real `~/.claude/settings.json`; build synthetic fixtures instead
 
 ## Hooks Flow
 
