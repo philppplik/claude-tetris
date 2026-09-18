@@ -11,7 +11,7 @@
       "name": "claude-tetris",
       "source": "./",
       "description": "Play Tetris in a split pane while Claude Code works. The game auto-pauses when Claude is done and resumes on your next prompt.",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "category": "productivity",
       "tags": [
         "game",
