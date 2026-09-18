@@ -7,6 +7,12 @@
 
 import path from "node:path";
 
+/**
+ * Name des Windows-Terminal-Fensters. Ein benanntes Fenster laesst sich spaeter
+ * eindeutig adressieren; existiert es nicht, legt wt.exe es an.
+ */
+export const WT_WINDOW = "claude-tetris";
+
 /** Reihenfolge der Backends. Erstes verfügbares gewinnt. */
 export const BACKENDS = ["wt", "tmux", "iterm", "kitty", "wezterm"];
 
@@ -98,7 +104,12 @@ const BUILDERS = {
   // shell:false ist Pflicht — sonst frisst eine zweite cmd.exe-Ebene das ';'.
   wt: ({ projectDir, pluginDir, tetris, size }) => ({
     command: "wt.exe",
+    // Benanntes Fenster: spaeter adressieren wir GENAU dieses fuer den
+    // Fokuswechsel. Mit "-w 0" (zuletzt benutztes Fenster) wuerde man bei
+    // mehreren offenen Terminals das falsche erwischen.
+    panes: { window: WT_WINDOW, capture: false },
     args: [
+      "-w", WT_WINDOW,
       "new-tab",
       "--title", "Claude Code",
       "cmd", "/k", `cd /d ${q(projectDir)} && claude`,
@@ -109,37 +120,46 @@ const BUILDERS = {
     ],
   }),
 
-  // tmux: die AKTUELLE Pane ist Claude Code. Wir hängen Tetris rechts daneben
-  // und geben den Fokus zurück, damit weitergetippt werden kann.
-  tmux: ({ pluginDir, tetris, size }) => ({
+  // tmux: die AKTUELLE Pane ist Claude Code. Wir haengen Tetris rechts daneben.
+  // -P -F gibt die ID der neuen Pane auf stdout aus, damit der Autofokus sie
+  // spaeter gezielt ansteuern kann. Den Fokus zurueckzugeben uebernimmt der
+  // Launcher selbst — so laeuft es ueber denselben Weg wie im Spielbetrieb.
+  tmux: ({ pluginDir, tetris, size, env }) => ({
     command: "tmux",
+    panes: { claude: env.TMUX_PANE ?? null, capture: true },
     args: [
       "split-window", "-h",
+      "-P", "-F", "#{pane_id}",
       "-p", String(Math.round(size * 100)),
       "-c", pluginDir,
       tetris,
-      ";",
-      "last-pane",
     ],
   }),
 
   // iTerm2 hat keine CLI für Splits — AppleScript ist der offizielle Weg.
   iterm: ({ pluginDir, tetris }) => ({
     command: "osascript",
+    // AppleScript gibt die Session-IDs zurueck: erst Claude, dann das Spiel.
+    panes: { capture: true, pair: true },
     args: [
       "-e", 'tell application "iTerm2"',
       "-e", "tell current session of current window",
-      "-e", `set newSession to (split vertically with default profile)`,
+      "-e", "set oldId to id",
+      "-e", "set newSession to (split vertically with default profile)",
       "-e", "end tell",
       "-e", "tell newSession",
       "-e", `write text ${aq(`cd ${q(pluginDir)} && ${tetris}`)}`,
+      "-e", "set newId to id",
       "-e", "end tell",
       "-e", "end tell",
+      "-e", "return oldId & \"\n\" & newId",
     ],
   }),
 
-  kitty: ({ pluginDir, tetris }) => ({
+  // kitty @ launch gibt die ID des neuen Fensters auf stdout aus.
+  kitty: ({ pluginDir, tetris, env }) => ({
     command: "kitty",
+    panes: { claude: env.KITTY_WINDOW_ID ?? null, capture: true },
     args: [
       "@", "launch",
       "--location", "vsplit",
@@ -149,8 +169,10 @@ const BUILDERS = {
     ],
   }),
 
-  wezterm: ({ pluginDir, tetris, size }) => ({
+  // wezterm cli split-pane gibt die ID der neuen Pane auf stdout aus.
+  wezterm: ({ pluginDir, tetris, size, env }) => ({
     command: "wezterm",
+    panes: { claude: env.WEZTERM_PANE ?? null, capture: true },
     args: [
       "cli", "split-pane",
       "--right",

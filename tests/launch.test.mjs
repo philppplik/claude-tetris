@@ -29,13 +29,30 @@ test("Windows: wählt Windows Terminal und baut new-tab + split-pane", () => {
   assert.ok(p.args.some((a) => a.includes("claude")), "Claude im Kommando");
 });
 
-test("Linux in tmux-Session: split-window mit Fokus-Rückgabe", () => {
-  const p = plan({ platform: "linux", env: { TMUX: "/tmp/tmux-1/default,123,0" } });
+test("Linux in tmux-Session: split-window, Pane-ID wird ausgegeben", () => {
+  const p = plan({
+    platform: "linux",
+    env: { TMUX: "/tmp/tmux-1/default,123,0", TMUX_PANE: "%7" },
+  });
   assert.equal(p.backend, "tmux");
   assert.equal(p.command, "tmux");
   assert.ok(p.args.includes("split-window"));
   assert.ok(p.args.includes("-h"), "horizontal geteilt = Tetris rechts");
-  assert.equal(p.args.at(-1), "last-pane", "Fokus zurück zu Claude");
+  // -P -F gibt die ID der neuen Pane aus; ohne sie kann der Autofokus sie
+  // später nicht ansteuern.
+  assert.ok(p.args.includes("-P"), "Pane-ID wird ausgegeben");
+  assert.equal(p.args[p.args.indexOf("-F") + 1], "#{pane_id}");
+  assert.equal(p.panes.claude, "%7", "aktuelle Pane = Claude");
+  assert.equal(p.panes.capture, true);
+});
+
+test("Windows Terminal öffnet ein benanntes Fenster", () => {
+  // Nur ein benanntes Fenster lässt sich später eindeutig für den Fokus
+  // ansprechen; "-w 0" träfe bei mehreren Terminals das falsche.
+  const p = plan({ platform: "win32" });
+  assert.equal(p.args[0], "-w");
+  assert.equal(p.args[1], p.panes.window);
+  assert.ok(p.panes.window, "Fenstername gesetzt");
 });
 
 test("tmux ohne laufende Session wird NICHT gewählt (nichts zum Splitten)", () => {

@@ -32,8 +32,10 @@ for long coding sessions.
 - ⚡ **DAS / ARR** with modern competitive defaults — tap to nudge, hold to slam
 - 🏆 **Persistent highscore**, survives closing the pane
 - ⏸ **Auto-pause coupling** via Claude Code hooks — no polling, just `fs.watch`
+- 🎯 **Focus follows the conversation** — submit a prompt and the game pane takes
+  the keyboard; Claude's reply hands it back
 - 🖥 **Split-pane on any terminal** — Windows Terminal, tmux, iTerm2, kitty, WezTerm
-- 📐 **Responsive TUI** that recomputes on resize (SIGWINCH)
+- 📐 **Responsive TUI** — panels drop by priority as the pane narrows, the board never does
 - ⌨️ **`/tetris` slash command** for Claude Code
 
 ---
@@ -104,6 +106,7 @@ Claude Code  ──hook──▶  state.json  ──fs.watch──▶  Tetris TU
 | `CLAUDE_TETRIS_DAS` | `100` | Delayed Auto Shift in ms — charge time before a held key repeats |
 | `CLAUDE_TETRIS_ARR` | `0` | Auto Repeat Rate in ms — `0` slides the piece straight to the wall |
 | `CLAUDE_TETRIS_PAUSE_ON_PERMISSION` | on | Set to `0` to keep playing through permission prompts |
+| `CLAUDE_TETRIS_FOCUS` | on | Set to `0` to keep focus where you put it |
 | `CLAUDE_TETRIS_DIR` | `~/.claude-tetris` | Where the signal file and highscore live |
 
 **A note on DAS in a terminal.** A terminal in raw mode delivers key-*down* events
