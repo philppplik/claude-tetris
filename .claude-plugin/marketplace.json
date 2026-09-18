@@ -11,9 +11,14 @@
       "name": "claude-tetris",
       "source": "./",
       "description": "Play Tetris in a split pane while Claude Code works. The game auto-pauses when Claude is done and resumes on your next prompt.",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "category": "productivity",
-      "tags": ["game", "tetris", "terminal", "fun"],
+      "tags": [
+        "game",
+        "tetris",
+        "terminal",
+        "fun"
+      ],
       "author": {
         "name": "Philipp Paulik",
         "url": "https://github.com/philppplik"

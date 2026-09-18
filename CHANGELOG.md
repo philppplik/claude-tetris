@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-18
+
+First release since 0.1.0. Version 0.2.0 was prepared in git but never tagged or
+published, so everything from it ships here.
+
 ### Added
+
+#### Game feel
 
 - **Lock delay** (500 ms, max 15 resets). A piece that lands stays movable, so
   slides and spin finishes are possible. The reset budget is capped so wiggling
@@ -20,16 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Pause on permission prompts** via the `Notification` hook, so a prompt is not
   missed while playing. Disable with `CLAUDE_TETRIS_PAUSE_ON_PERMISSION=0`.
 
-### Fixed
+  Note on DAS: a terminal in raw mode has no key-up event, so a held key is
+  inferred from the OS auto-repeat stream. Its initial delay (250–500 ms) is a
+  floor `CLAUDE_TETRIS_DAS` cannot go below; it applies after auto-repeat is
+  detected. `ARR=0` is where the responsiveness comes from.
 
-- `install.mjs` and `uninstall.mjs` called `main()` at module level, so merely
-  importing them edited the user's real `~/.claude/settings.json`. They now only
-  run when executed directly, guarded by `lib/direct-run.mjs` and a regression
-  test.
-
-## [0.2.0] - 2026-09-18
-
-### Added
+#### Reach and distribution
 
 - **Cross-platform split panes.** `launch` now supports tmux, iTerm2, kitty and
   WezTerm in addition to Windows Terminal, so the game works on macOS and Linux.
@@ -47,6 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Importing `install.mjs` or `uninstall.mjs` edited the user's real
+  `~/.claude/settings.json`.** Both called `main()` at module level. They now run
+  only when executed directly, guarded by `lib/direct-run.mjs` and a regression
+  test.
 - **The hold slot never worked properly.** `reset()` and `holdPiece()` wrote to
   `this.old` while the rest of the engine read `this.hold`, so the slot was never
   rendered and a second hold discarded the held piece instead of swapping it back.
@@ -83,6 +90,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an atomically written signal file.
 - Windows Terminal split-pane launcher and a `/tetris` slash command.
 
-[Unreleased]: https://github.com/philppplik/claude-tetris/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/philppplik/claude-tetris/compare/v0.1.0...v0.2.0
+[Unreleased]: https://github.com/philppplik/claude-tetris/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/philppplik/claude-tetris/compare/v0.1.0...v0.3.0
 [0.1.0]: https://github.com/philppplik/claude-tetris/releases/tag/v0.1.0
