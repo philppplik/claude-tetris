@@ -5,10 +5,13 @@
 
 # Binary assets must never be touched.
 *.png binary
+*.gif binary
 
 # Windows helper scripts need CRLF to run reliably on cmd.exe.
 *.bat text eol=crlf
 
 # Keep the published npm tarball lean.
 tests/       export-ignore
+tools/       export-ignore
+assets/      export-ignore
 .github/     export-ignore
