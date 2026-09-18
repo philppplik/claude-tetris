@@ -1,0 +1,14 @@
+# Normalize all text files to LF in the repository.
+# Without this, contributors on Windows commit CRLF and every file shows up as
+# fully rewritten in diffs.
+* text=auto eol=lf
+
+# Binary assets must never be touched.
+*.png binary
+
+# Windows helper scripts need CRLF to run reliably on cmd.exe.
+*.bat text eol=crlf
+
+# Keep the published npm tarball lean.
+tests/       export-ignore
+.github/     export-ignore

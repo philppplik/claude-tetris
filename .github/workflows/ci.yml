@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test (${{ matrix.os }}, node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # The launcher picks a different backend per platform, so all three
+        # must stay green.
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ["18", "20", "22"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: node --test
+        shell: bash
+
+  package:
+    name: package contents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # Catches a files[] entry that stopped matching reality before it ships.
+      - name: Verify the tarball carries everything the plugin needs
+        run: |
+          npm pack --dry-run --json > pack.json
+          node -e '
+            const files = require("./pack.json")[0].files.map(f => f.path);
+            const required = [
+              "bin/tetris.mjs",
+              "game/core.mjs",
+              "lib/signal.mjs",
+              "scripts/tetris-signal.mjs",
+              "scripts/launch-plan.mjs",
+              "hooks/hooks.json",
+              "commands/tetris.md",
+              ".claude-plugin/plugin.json",
+            ];
+            const missing = required.filter(r => !files.includes(r));
+            if (missing.length) {
+              console.error("Missing from the npm tarball:\n  " + missing.join("\n  "));
+              process.exit(1);
+            }
+            console.log("Tarball contains all " + required.length + " required files.");
+          '
+
+  manifests:
+    name: plugin manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate against the Claude Code plugin spec
+        run: npx --yes @anthropic-ai/claude-code plugin validate .

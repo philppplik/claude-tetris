@@ -112,7 +112,7 @@ export class Tetris {
     this.gameOver = false;
     this._bag = [];
     this.queue = [];
-    this.old = null;
+    this.hold = null;
     this.canHold = true; // darf im Reset initial true sein
     this.current = null;
     this._refillQueue();
@@ -270,8 +270,8 @@ export class Tetris {
     if (this.gameOver || !this.canHold) return false;
     this.canHold = false;
     const cur = this.current.type;
-    if (this.old == null) {
-      this.old = cur;
+    if (this.hold == null) {
+      this.hold = cur;
       this.spawn();
     } else {
       const swap = this.hold;

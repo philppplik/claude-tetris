@@ -22,10 +22,16 @@ const FAKE_SETTINGS = path.join(FAKE_CLAUDE_DIR, "settings.json");
 function setup() {
   fs.rmSync(TMP, { recursive: true, force: true });
   fs.mkdirSync(path.dirname(FAKE_SETTINGS), { recursive: true });
-  // Echte settings.json kopieren (falls vorhanden), sonst Minimal-Config
-  const base = fs.existsSync(REAL)
-    ? JSON.parse(fs.readFileSync(REAL, "utf8"))
-    : { hooks: {} };
+  // Synthetische Fremd-Hooks: der Test darf NICHT davon abhängen, was in der
+  // echten settings.json des Users steht (war vorher der Fall → Flake).
+  const base = {
+    hooks: {
+      UserPromptSubmit: [
+        { hooks: [{ type: "command", command: "node rune-kit/on-prompt.mjs" }] },
+      ],
+      Stop: [{ hooks: [{ type: "command", command: "node rune-kit/on-stop.mjs" }] }],
+    },
+  };
   fs.writeFileSync(FAKE_SETTINGS, JSON.stringify(base, null, 2));
 }
 
