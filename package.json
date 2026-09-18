@@ -11,11 +11,14 @@
     "game/",
     "lib/",
     "scripts/",
-    "claude-code/",
+    "commands/",
+    "hooks/",
+    ".claude-plugin/",
     "install.bat",
     "uninstall.bat",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "start": "node bin/tetris.mjs",
@@ -29,6 +32,7 @@
   },
   "keywords": [
     "claude-code",
+    "claude-code-plugin",
     "tetris",
     "plugin",
     "tui",

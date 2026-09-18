@@ -70,9 +70,10 @@ function main() {
   addHook(settings.hooks, "UserPromptSubmit", PLAY_CMD);
   addHook(settings.hooks, "Stop", PAUSE_CMD);
 
-  // Plugin registrieren (für marketplace-freie lokale Installation)
-  settings.enabledPlugins = settings.enabledPlugins || {};
-  settings.enabledPlugins["claude-tetris@local"] = true;
+  // Bewusst KEIN enabledPlugins-Eintrag: dieser Pfad verdrahtet nur die Hooks
+  // direkt. Die Plugin-Registrierung macht Claude Code selbst, sobald das
+  // Plugin über den Marketplace installiert wird (/plugin install).
+  // uninstall.mjs räumt den früher geschriebenen Eintrag weiterhin auf.
 
   fs.mkdirSync(path.dirname(SETTINGS), { recursive: true });
   fs.writeFileSync(SETTINGS, JSON.stringify(settings, null, 2) + "\n");

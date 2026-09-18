@@ -5,7 +5,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"<plugin_dir>/scripts/tetris-signal.mjs\" play"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/tetris-signal.mjs\" play",
+            "async": true
           }
         ]
       }
@@ -15,7 +16,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"<plugin_dir>/scripts/tetris-signal.mjs\" pause"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/tetris-signal.mjs\" pause",
+            "async": true
           }
         ]
       }
