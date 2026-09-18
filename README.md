@@ -2,6 +2,8 @@
 
 <img src="claude-tetris.png" alt="claude-tetris — Tetris ▷_ Claude" width="100%" />
 
+<img src="assets/demo.gif" alt="A Tetris board clearing four lines, then freezing with the message: Claude is done, waiting for your next prompt" width="460" />
+
 # 🧱 claude-tetris
 
 ### Play Tetris in a split pane beside Claude Code.
@@ -219,7 +221,12 @@ claude-tetris/
 git clone https://github.com/philppplik/claude-tetris.git
 cd claude-tetris
 npm test            # no dependencies to install
+npm run demo        # regenerate assets/demo.gif (needs ffmpeg)
 ```
+
+The demo GIF is generated, not hand-recorded: `tools/record-demo.mjs` drives the
+real engine with a fixed seed and a fixed input script, so re-running it after a UI
+change produces a diff that reflects the change rather than a different playthrough.
 
 CI runs the suite on Linux, macOS and Windows against Node 18, 20 and 22. See
 [CONTRIBUTING.md](./CONTRIBUTING.md) for conventions and the release process,
