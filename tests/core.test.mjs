@@ -144,7 +144,7 @@ test("Hold: tauscht Stück, nur 1× pro Fall", () => {
   const first = g.current.type;
   g.holdPiece();
   assert.notEqual(g.current.type, first, "nach Hold ist ein anderes Stück aktiv");
-  assert.equal(g.old, first, "Hold-Slot hält das erste Stück");
+  assert.equal(g.hold, first, "Hold-Slot hält das erste Stück");
   const after = g.current.type;
   g.holdPiece(); // 2. Mal -> darf nicht tauschen
   assert.equal(g.current.type, after, "2. Hold im selben Fall wird ignoriert");
@@ -189,4 +189,27 @@ test("deterministisch: gleicher Seed -> gleiche Stück-Sequenz", () => {
     b.hardDrop();
   }
   assert.equal(seqA.join(""), seqB.join(""));
+});
+
+test("hold: erster Hold legt Stück ab, zweiter tauscht es zurück", () => {
+  const g = new Tetris({ rng: seeded(7) });
+  const first = g.current.type;
+  assert.equal(g.hold, null);
+
+  // 1. Hold: aktuelles Stück wandert in den Hold-Slot, neues Stück kommt
+  assert.ok(g.holdPiece());
+  assert.equal(g.hold, first, "Hold-Slot enthält das erste Stück");
+  assert.equal(g.getState().hold, first);
+  const second = g.current.type;
+
+  // Im selben Fall kein zweiter Hold
+  assert.equal(g.holdPiece(), false);
+
+  // Nach Lock wieder erlaubt: Tausch statt Verlust
+  g.hardDrop();
+  const third = g.current.type;
+  assert.ok(g.holdPiece());
+  assert.equal(g.current.type, first, "gehaltenes Stück kommt zurück");
+  assert.equal(g.hold, third, "aktuelles Stück wandert in den Hold-Slot");
+  assert.ok(second);
 });
