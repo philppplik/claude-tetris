@@ -10,6 +10,7 @@ A full Tetris game that runs **alongside** Claude Code. It **auto-pauses the mom
 Claude is done** — and resumes the second you type your next prompt. A tiny reward
 for long coding sessions.
 
+[![CI](https://github.com/philppplik/claude-tetris/actions/workflows/ci.yml/badge.svg)](https://github.com/philppplik/claude-tetris/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/claude-tetris.svg)](https://www.npmjs.com/package/claude-tetris)
 [![npm downloads](https://img.shields.io/npm/dm/claude-tetris.svg)](https://www.npmjs.com/package/claude-tetris)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
@@ -34,7 +35,19 @@ for long coding sessions.
 
 ## 📦 Install
 
-### Option A — npm (global)
+### Option A — Claude Code plugin (recommended)
+
+Inside Claude Code:
+
+```
+/plugin marketplace add philppplik/claude-tetris
+/plugin install claude-tetris@philppplik-plugins
+```
+
+That wires up the hooks and the `/tetris` slash command. No files of yours are
+edited — Claude Code manages the plugin.
+
+### Option B — npm (global)
 
 ```bash
 npm install -g claude-tetris
@@ -42,22 +55,22 @@ claude-tetris install   # wire up the Claude Code hooks (backs up settings.json)
 claude-tetris launch    # open the split pane (Claude left, Tetris right)
 ```
 
-### Option B — npx (no install)
+### Option C — npx (no install, just play)
 
 ```bash
 npx claude-tetris
 ```
 
-### Option C — Windows double-click (easiest)
+### Option D — Windows double-click
 
 1. Double-click **`install.bat`** — hooks install automatically (your `settings.json` is backed up).
 2. When prompted, open the split pane.
 3. To remove: double-click **`uninstall.bat`**.
 
-### Claude Code slash command
+### Slash command
 
-Once the hooks are installed, type **`/tetris`** inside Claude Code to launch the
-game in a fresh split pane.
+Once installed, type **`/tetris`** inside Claude Code to launch the game in a
+fresh split pane.
 
 ---
 
@@ -151,7 +164,11 @@ claude-tetris/
 │   ├── launch.mjs        # split-pane launcher (executes the plan)
 │   ├── launch-plan.mjs   # pure backend selection: wt / tmux / iTerm2 / kitty / wezterm
 │   └── tetris-signal.mjs # hook bridge: play / pause / status
-├── claude-code/          # plugin manifest + command + hooks template
+├── .claude-plugin/
+│   ├── plugin.json       # plugin manifest
+│   └── marketplace.json  # marketplace catalogue
+├── hooks/hooks.json      # UserPromptSubmit → play, Stop → pause
+├── commands/tetris.md    # the /tetris slash command
 ├── install.bat           # double-click Windows installer
 ├── uninstall.bat         # double-click Windows uninstaller
 └── tests/                # unit tests (node --test)
@@ -161,7 +178,13 @@ claude-tetris/
 
 - **Headless engine** (`game/core.mjs`) — no terminal I/O, fully unit-tested.
 - **Signal channel** (`lib/signal.mjs`) — atomic temp+rename writes, tolerant reads.
-  Avoids Windows socket/pipe pain.
+  Avoids Windows socket/pipe pain, and couples across windows, not just panes.
+- **Pure launcher planning** (`scripts/launch-plan.mjs`) — backend selection takes
+  `platform`, `env` and `has()` as arguments, so every terminal backend is
+  testable from any machine.
+- **Repository root is the plugin root** — Claude Code copies a plugin into its
+  cache, and a copied plugin cannot reach outside its own directory with `../`.
+  `scripts/` therefore has to live inside it.
 - **Hook merge** — installs never overwrite existing hooks; backups auto-created.
 
 ---
@@ -171,8 +194,12 @@ claude-tetris/
 ```bash
 git clone https://github.com/philppplik/claude-tetris.git
 cd claude-tetris
-npm test            # full suite, ~2s
+npm test            # no dependencies to install
 ```
+
+CI runs the suite on Linux, macOS and Windows against Node 18, 20 and 22. See
+[CONTRIBUTING.md](./CONTRIBUTING.md) for conventions and the release process,
+and [ROADMAP.md](./ROADMAP.md) for what is planned.
 
 ---
 
