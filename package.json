@@ -1,6 +1,6 @@
 {
   "name": "claude-tetris",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Play Tetris in a split pane beside Claude Code — auto-pauses when Claude is done, resumes on your next prompt.",
   "type": "module",
   "bin": {

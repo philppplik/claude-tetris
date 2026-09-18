@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-18
+
+Documentation only. No code changes — the published package is byte-for-byte
+identical apart from the README.
+
+### Added
+
+- A demo GIF at the top of the README, generated reproducibly by
+  `tools/record-demo.mjs` from the real engine with a fixed seed.
+
+npm renders the README from the published tarball, so the GIF only reaches
+npmjs.com with a release. Relative paths need no rewriting: npm resolves them
+against the repository automatically.
+
 ## [0.3.0] - 2026-09-18
 
 First release since 0.1.0. Version 0.2.0 was prepared in git but never tagged or
@@ -90,6 +104,7 @@ published, so everything from it ships here.
   an atomically written signal file.
 - Windows Terminal split-pane launcher and a `/tetris` slash command.
 
-[Unreleased]: https://github.com/philppplik/claude-tetris/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/philppplik/claude-tetris/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/philppplik/claude-tetris/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/philppplik/claude-tetris/compare/v0.1.0...v0.3.0
 [0.1.0]: https://github.com/philppplik/claude-tetris/releases/tag/v0.1.0
