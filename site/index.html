@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Claude Tetris - Tetris neben Claude Code</title>
+    <meta
+      name="description"
+      content="Tetris im Terminal neben Claude Code. Spielt, während dein Prompt läuft. Pausiert, sobald Claude fertig ist. Ein kleines Spiel für die Wartezeit, nicht für den ganzen Arbeitstag."
+    />
+    <link rel="canonical" href="https://ct.philipp-paulik.de/" />
+    <meta name="theme-color" content="#111313" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:site_name" content="Claude Tetris" />
+    <meta property="og:title" content="Claude Tetris" />
+    <meta
+      property="og:description"
+      content="Tetris im Terminal neben Claude Code. Spielt, während dein Prompt läuft. Pausiert, sobald Claude fertig ist. Ein kleines Spiel für die Wartezeit, nicht für den ganzen Arbeitstag."
+    />
+    <meta property="og:url" content="https://ct.philipp-paulik.de/" />
+    <meta property="og:image" content="https://ct.philipp-paulik.de/social.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Claude Tetris" />
+    <meta
+      name="twitter:description"
+      content="Tetris im Terminal neben Claude Code. Spielt, während dein Prompt läuft. Pausiert, sobald Claude fertig ist. Ein kleines Spiel für die Wartezeit, nicht für den ganzen Arbeitstag."
+    />
+    <meta name="twitter:image" content="https://ct.philipp-paulik.de/social.png" />
+    <style>
+      :root {
+        --accent: #e6ad83;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: #111313;
+        color: #eeeae3;
+        font:
+          16px/1.65 Arial,
+          sans-serif;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      a:hover {
+        color: var(--accent);
+      }
+      .wrap {
+        max-width: 1200px;
+        margin: auto;
+        padding: 0 6%;
+      }
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 28px;
+        padding-bottom: 28px;
+        border-bottom: 1px solid #ffffff20;
+      }
+      .brand {
+        font-weight: 700;
+        font-size: 25px;
+        letter-spacing: -1px;
+      }
+      .nav nav {
+        display: flex;
+        gap: 25px;
+        font-size: 13px;
+      }
+      .tag,
+      .eyebrow {
+        font: 11px/1.5 monospace;
+        letter-spacing: 2px;
+        color: var(--accent);
+      }
+      .hero {
+        padding-top: 95px;
+        padding-bottom: 85px;
+        position: relative;
+      }
+      .hero:after {
+        content: '';
+        position: absolute;
+        z-index: -1;
+        inset: 0;
+        background: radial-gradient(
+          ellipse at 90% 10%,
+          color-mix(in srgb, var(--accent) 10%, transparent),
+          transparent 60%
+        );
+      }
+      h1,
+      h2 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+        line-height: 1.04;
+        letter-spacing: -3px;
+      }
+      h1 {
+        font-size: clamp(52px, 7.3vw, 100px);
+        margin: 25px 0 30px;
+      }
+      em {
+        font-weight: 400;
+        color: var(--accent);
+      }
+      .lead {
+        max-width: 670px;
+        color: #bdbeb8;
+        font-size: 19px;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin: 32px 0;
+      }
+      .button {
+        border: 1px solid #ffffff30;
+        padding: 12px 23px;
+        border-radius: 100px;
+        font-size: 14px;
+        display: inline-block;
+      }
+      .primary {
+        background: var(--accent);
+        color: #101313;
+        border-color: var(--accent);
+      }
+      .primary:hover {
+        color: #101313;
+        filter: brightness(1.1);
+      }
+      .meta {
+        color: #919790;
+        font: 12px/1.8 monospace;
+      }
+      .visual {
+        border: 1px solid #ffffff24;
+        border-radius: 14px;
+        background: #191c1c;
+        overflow: hidden;
+        margin: 0 0 70px;
+      }
+      .visual img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .visual .bar {
+        padding: 12px 20px;
+        border-bottom: 1px solid #ffffff18;
+        font: 11px monospace;
+        color: #999;
+      }
+      .terminal {
+        padding: 40px;
+        font: clamp(13px, 2vw, 19px)/2 monospace;
+      }
+      .terminal span {
+        color: var(--accent);
+      }
+      .section {
+        padding: 65px 0;
+        border-top: 1px solid #ffffff20;
+      }
+      h2 {
+        font-size: clamp(38px, 5vw, 62px);
+        margin: 15px 0 35px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 45px;
+      }
+      .grid article {
+        border-top: 1px solid #ffffff20;
+        padding-top: 20px;
+      }
+      .number {
+        color: var(--accent);
+        font: 12px monospace;
+      }
+      h3 {
+        font-size: 21px;
+        font-weight: 400;
+        margin: 15px 0 8px;
+      }
+      p {
+        color: #bdbeb8;
+      }
+      .install {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 50px;
+      }
+      .install pre {
+        padding: 22px;
+        background: #1b1e1e;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        border: 1px solid #ffffff24;
+        color: var(--accent);
+        font-size: 13px;
+      }
+      .faq {
+        max-width: 820px;
+      }
+      details {
+        border-top: 1px solid #ffffff25;
+        padding: 20px 0;
+      }
+      summary {
+        cursor: pointer;
+        font-size: 19px;
+      }
+      footer {
+        padding: 45px 0;
+        color: #9ca19a;
+        font-size: 13px;
+      }
+      footer .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 22px;
+        margin-top: 20px;
+      }
+      .legal {
+        max-width: 850px;
+        padding-top: 60px;
+        padding-bottom: 60px;
+      }
+      .legal h1 {
+        font-size: 60px;
+      }
+      .legal h2 {
+        font: 26px Georgia;
+        letter-spacing: 0;
+        line-height: 1.2;
+        margin-top: 35px;
+      }
+      .legal a {
+        text-decoration: underline;
+      }
+      .skip {
+        position: absolute;
+        top: -100px;
+      }
+      .skip:focus {
+        top: 0;
+        background: #fff;
+        color: #000;
+        padding: 10px;
+      }
+      @media (max-width: 650px) {
+        .nav nav {
+          gap: 12px;
+          font-size: 11px;
+        }
+        .brand {
+          font-size: 21px;
+        }
+        .hero {
+          padding-top: 65px;
+          padding-bottom: 45px;
+        }
+        h1 {
+          letter-spacing: -2px;
+        }
+        .lead {
+          font-size: 17px;
+        }
+        .grid,
+        .install {
+          grid-template-columns: 1fr;
+          gap: 25px;
+        }
+        .terminal {
+          padding: 20px;
+          font-size: 12px;
+        }
+        .section {
+          padding: 45px 0;
+        }
+        .visual {
+          margin-bottom: 40px;
+        }
+        .legal h1 {
+          font-size: 44px;
+        }
+        .nav nav a:first-child {
+          display: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#main">Zum Inhalt</a>
+    <header class="wrap nav">
+      <a class="brand" href="./">Claude Tetris</a>
+      <nav>
+        <a href="./#features">Features</a
+        ><a href="https://github.com/philppplik/claude-tetris#readme">Dokumentation ↗</a
+        ><a href="https://github.com/philppplik/claude-tetris">GitHub ↗</a>
+      </nav>
+    </header>
+<main id="main" class="wrap"><section class="hero"><span class="eyebrow">WAIT FOR CODE. PLAY A LITTLE.</span><h1>Claude denkt.<br><em>Du stapelst.</em></h1><p class="lead">Tetris im Terminal neben Claude Code. Spielt, während dein Prompt läuft. Pausiert, sobald Claude fertig ist. Ein kleines Spiel für die Wartezeit, nicht für den ganzen Arbeitstag.</p><div class="actions"><a class="button primary" href="https://github.com/philppplik/claude-tetris#-install">Plugin installieren ↗</a><a class="button" href="https://github.com/philppplik/claude-tetris">Quellcode ansehen ↗</a></div><div class="meta">OPEN SOURCE / MIT · Node.js 18+ / Windows, macOS, Linux<br>Version 0.4.0 · 1. Oktober 2026</div></section><figure class="visual" style="margin-left:0;margin-right:0"><div class="bar">CLAUDE TETRIS / ABLAUF · SCHEMATISCHE DARSTELLUNG</div><div class="terminal"><span>Prompt senden</span> → PLAY<br><span>Claude arbeitet</span> → Tetris läuft<br><span>Claude fertig</span> → PAUSE<br><br>Dein nächster Prompt? <span>Nächstes Spiel.</span></div></figure><section class="section" id="features"><span class="eyebrow">GUTE TOOLS LASSEN DIR DIE WAHL</span><h2>Warten darf<br><em>Spaß machen.</em></h2><div class="grid"><article><span class="number">01</span><h3>Pause im richtigen Moment</h3><p>Claude-Code-Hooks melden neue Prompts, fertige Antworten und Berechtigungsfragen. Das Spiel liest eine lokale Signaldatei per fs.watch.</p></article><article><span class="number">02</span><h3>Ein richtiges Tetris</h3><p>SRS-Rotation, Wall Kicks, 7-Bag, Ghost Piece, Hold und Hard Drop. Highscore wird lokal gespeichert.</p></article><article><span class="number">03</span><h3>Ein Fenster, zwei Welten</h3><p>Split-Panes mit Windows Terminal, tmux, iTerm2, kitty oder WezTerm. Ohne unterstütztes Terminal geht ein zweites Fenster.</p></article><article><span class="number">04</span><h3>Du behältst die Tastatur</h3><p>Fokus-Wechsel ist abschaltbar. Auch Pause bei Berechtigungsfragen, DAS und ARR lassen sich konfigurieren.</p></article></div></section><section class="section install"><div><span class="eyebrow">LOSLEGEN</span><h2>Offen gebaut.<br><em>Offen erklärt.</em></h2><p>Unabhängiges Community-Projekt. Kein offizielles Anthropic-Produkt.</p><a class="button" href="https://github.com/philppplik/claude-tetris#readme">Dokumentation lesen ↗</a></div><div><pre>/plugin marketplace add philppplik/claude-tetris
+/plugin install claude-tetris@philppplik-plugins
+
+# Nur spielen, ohne Hooks einzurichten:
+npx claude-tetris</pre><p class="meta">Voraussetzungen und Grenzen im README beachten.</p></div></section><section class="section faq"><span class="eyebrow">DIREKTE ANTWORTEN</span><h2>Gut zu wissen.</h2><details><summary>Was ist Claude Tetris?</summary><p>Ein quelloffenes Terminal-Spiel, das neben Claude Code läuft und über dessen Hooks automatisch pausiert und fortsetzt.</p></details><details><summary>Kann ich hier im Browser spielen?</summary><p>Nein. Diese Seite erklärt das Terminal-Tool. Installation geht über das Claude-Code-Plugin, npm oder npx.</p></details><details><summary>Wie installiere ich das Plugin?</summary><p>In Claude Code: /plugin marketplace add philppplik/claude-tetris, danach /plugin install claude-tetris@philppplik-plugins. Das npm-Setup ist eine Alternative und sichert settings.json vor der Hook-Änderung.</p></details><details><summary>Ist es ein offizielles Anthropic-Produkt?</summary><p>Nein. Claude Tetris ist ein unabhängiges Open-Source-Projekt von Philipp Paulik, keine offizielle Verbindung zu Anthropic.</p></details></section></main><script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Claude Tetris", "url": "https://ct.philipp-paulik.de/", "description": "Tetris im Terminal neben Claude Code. Spielt, während dein Prompt läuft. Pausiert, sobald Claude fertig ist. Ein kleines Spiel für die Wartezeit, nicht für den ganzen Arbeitstag.", "operatingSystem": "Node.js 18+ / Windows, macOS, Linux", "softwareVersion": "0.4.0", "applicationCategory": "GameApplication", "author": {"@type": "Person", "name": "Philipp Paulik", "url": "https://philipp-paulik.de/"}, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "license": "https://github.com/philppplik/claude-tetris/blob/main/LICENSE"}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareSourceCode", "name": "Claude Tetris", "codeRepository": "https://github.com/philppplik/claude-tetris"}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Was ist Claude Tetris?", "acceptedAnswer": {"@type": "Answer", "text": "Ein quelloffenes Terminal-Spiel, das neben Claude Code läuft und über dessen Hooks automatisch pausiert und fortsetzt."}}, {"@type": "Question", "name": "Kann ich hier im Browser spielen?", "acceptedAnswer": {"@type": "Answer", "text": "Nein. Diese Seite erklärt das Terminal-Tool. Installation geht über das Claude-Code-Plugin, npm oder npx."}}, {"@type": "Question", "name": "Wie installiere ich das Plugin?", "acceptedAnswer": {"@type": "Answer", "text": "In Claude Code: /plugin marketplace add philppplik/claude-tetris, danach /plugin install claude-tetris@philppplik-plugins. Das npm-Setup ist eine Alternative und sichert settings.json vor der Hook-Änderung."}}, {"@type": "Question", "name": "Ist es ein offizielles Anthropic-Produkt?", "acceptedAnswer": {"@type": "Answer", "text": "Nein. Claude Tetris ist ein unabhängiges Open-Source-Projekt von Philipp Paulik, keine offizielle Verbindung zu Anthropic."}}]}</script>    <footer class="wrap">
+      <span
+        >Ein Projekt von <a href="https://philipp-paulik.de/">Philipp Paulik ↗</a> · Open Source ·
+        MIT</span
+      >
+      <div class="links">
+        <a href="impressum">Impressum</a><a href="datenschutz">Datenschutz</a
+        ><a href="https://hob.philipp-paulik.de/">Daily Hob</a
+        ><a href="https://kifachblatt.de/">KI Fachblatt</a>
+      </div>
+    </footer>
+  </body>
+</html>
