@@ -9,7 +9,7 @@ Was ist Claude Tetris?
 Ein quelloffenes Terminal-Spiel, das neben Claude Code läuft und über dessen Hooks automatisch pausiert und fortsetzt.
 
 Kann ich hier im Browser spielen?
-Nein. Diese Seite erklärt das Terminal-Tool. Installation geht über das Claude-Code-Plugin, npm oder npx.
+Nein. Diese Seite erklärt das Terminal-Tool. Installation geht über das npm oder npx. Das bisherige Plugin wird vom aktuellen Namensvalidator abgelehnt.
 
 Wie installiere ich das Plugin?
 In Claude Code: /plugin marketplace add philppplik/claude-tetris, danach /plugin install claude-tetris@philppplik-plugins. Das npm-Setup ist eine Alternative und sichert settings.json vor der Hook-Änderung.
