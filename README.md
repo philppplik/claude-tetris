@@ -48,7 +48,7 @@ Inside Claude Code:
 
 ```
 /plugin marketplace add philppplik/claude-tetris
-/plugin install claude-tetris@philppplik-plugins
+/plugin install idle-tetris@philppplik-plugins
 ```
 
 That wires up the hooks and the `/tetris` slash command. No files of yours are
