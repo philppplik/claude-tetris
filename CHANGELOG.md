@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-10-02
+
+### Fixed
+
+- **The Claude Code plugin validates again.** Claude Code reserves plugin names
+  that start with `claude-`, so the plugin is now called `idle-tetris`. Install it
+  with `/plugin install idle-tetris@philppplik-plugins`. The npm package, the CLI
+  command and the repository keep the name `claude-tetris`.
+
 ## [0.4.1] - 2026-10-02
 
 ### Fixed
@@ -145,7 +154,8 @@ published, so everything from it ships here.
   an atomically written signal file.
 - Windows Terminal split-pane launcher and a `/tetris` slash command.
 
-[Unreleased]: https://github.com/philppplik/claude-tetris/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/philppplik/claude-tetris/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/philppplik/claude-tetris/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/philppplik/claude-tetris/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/philppplik/claude-tetris/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/philppplik/claude-tetris/compare/v0.3.0...v0.3.1
