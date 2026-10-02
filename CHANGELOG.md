@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-02
+
+### Fixed
+
+- **`npx claude-tetris` no longer starts frozen.** Without a signal file (no
+  hooks installed, or never used with Claude Code) the game showed the
+  "Claude is done" pause screen and ignored the keyboard. A missing or unreadable
+  `state.json` now means PLAY. Once a hook has written a state, that state wins
+  as before.
+
 ## [0.4.0] - 2026-09-18
 
 ### Added
@@ -135,7 +145,8 @@ published, so everything from it ships here.
   an atomically written signal file.
 - Windows Terminal split-pane launcher and a `/tetris` slash command.
 
-[Unreleased]: https://github.com/philppplik/claude-tetris/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/philppplik/claude-tetris/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/philppplik/claude-tetris/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/philppplik/claude-tetris/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/philppplik/claude-tetris/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/philppplik/claude-tetris/compare/v0.1.0...v0.3.0
