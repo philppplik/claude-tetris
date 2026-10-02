@@ -9,10 +9,10 @@ Was ist Claude Tetris?
 Ein quelloffenes Terminal-Spiel, das neben Claude Code läuft und über dessen Hooks automatisch pausiert und fortsetzt.
 
 Kann ich hier im Browser spielen?
-Nein. Diese Seite erklärt das Terminal-Tool. Installation geht über das npm oder npx. Das bisherige Plugin wird vom aktuellen Namensvalidator abgelehnt.
+Nein. Diese Seite erklärt das Terminal-Tool. Installation geht über npm, npx oder als Claude-Code-Plugin (idle-tetris).
 
 Wie installiere ich das Plugin?
-In Claude Code: /plugin marketplace add philppplik/claude-tetris, danach /plugin install claude-tetris@philppplik-plugins. Das npm-Setup ist eine Alternative und sichert settings.json vor der Hook-Änderung.
+In Claude Code: /plugin marketplace add philppplik/claude-tetris, danach /plugin install idle-tetris@philppplik-plugins. Das npm-Setup ist eine Alternative und sichert settings.json vor der Hook-Änderung.
 
 Ist es ein offizielles Anthropic-Produkt?
 Nein. Claude Tetris ist ein unabhängiges Open-Source-Projekt von Philipp Paulik, keine offizielle Verbindung zu Anthropic.
