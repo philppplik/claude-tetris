@@ -18,7 +18,7 @@ const hooks = read("hooks/hooks.json");
 
 test("plugin.json liegt am Spec-Ort und hat die Pflichtfelder", () => {
   assert.ok(fs.existsSync(path.join(ROOT, ".claude-plugin", "plugin.json")));
-  assert.equal(plugin.name, "claude-tetris");
+  assert.equal(plugin.name, "idle-tetris");
   assert.match(plugin.name, /^[a-z0-9]+(-[a-z0-9]+)*$/, "kebab-case");
   assert.ok(plugin.description);
   assert.ok(plugin.author?.name);

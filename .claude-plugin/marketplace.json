@@ -8,10 +8,10 @@
   },
   "plugins": [
     {
-      "name": "claude-tetris",
+      "name": "idle-tetris",
       "source": "./",
       "description": "Play Tetris in a split pane while Claude Code works. The game auto-pauses when Claude is done and resumes on your next prompt.",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "category": "productivity",
       "tags": [
         "game",
