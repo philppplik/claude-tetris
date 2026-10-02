@@ -108,3 +108,18 @@ test("Tetris-Gravitation stoppt während Signal-Pause", async () => {
   assert.equal(rowStill, rowAfterPause, "Stück bewegt sich nicht während Pause");
   cleanup(ctx);
 });
+
+test("Ohne state.json (z. B. `npx claude-tetris` ohne Hooks) startet das Spiel im PLAY-Zustand", () => {
+  fs.rmSync(tmpBase, { recursive: true, force: true });
+  fs.mkdirSync(tmpBase, { recursive: true });
+  const ctx = makeUI();
+  ctx.ui._refreshSignal();
+  assert.equal(ctx.ui.signalPause, false);
+  assert.equal(ctx.ui.paused, false, "Ohne Signaldatei darf das Spiel nicht pausiert sein");
+
+  // Sobald ein Hook schreibt, gilt wieder dessen Zustand.
+  callHook("pause");
+  ctx.ui._refreshSignal();
+  assert.equal(ctx.ui.paused, true);
+  cleanup(ctx);
+});
