@@ -125,7 +125,7 @@ export class TetrisTUI {
 
   // ---- Signal: fs.watch statt Polling ----
   _refreshSignal() {
-    const { state } = readState();
+    const { state } = readState({ fallback: STATES.PLAY });
     const shouldPause = state !== STATES.PLAY;
     if (shouldPause !== this.signalPause) {
       this.signalPause = shouldPause;
@@ -137,7 +137,7 @@ export class TetrisTUI {
     const file = getStatePath();
     const apply = () => {
       try {
-        const { state } = readState();
+        const { state } = readState({ fallback: STATES.PLAY });
         const shouldPause = state !== STATES.PLAY;
         if (shouldPause !== this.signalPause) {
           this.signalPause = shouldPause;
