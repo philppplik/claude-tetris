@@ -25,6 +25,6 @@ jobs:
         with:
           path: site
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
 # Static project marketing only; the terminal game is not hosted here.
